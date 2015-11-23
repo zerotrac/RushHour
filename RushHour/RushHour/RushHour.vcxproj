@@ -94,7 +94,9 @@
   <ItemGroup>
     <Image Include="res\pic\background_0.bmp" />
     <Image Include="res\pic\background_1.bmp" />
+    <Image Include="res\pic\mouse_down.bmp" />
     <Image Include="res\pic\mouse_run.bmp" />
+    <Image Include="res\pic\mouse_up.bmp" />
     <Image Include="res\ui\background.bmp" />
     <Image Include="res\ui\black_roof.bmp" />
     <Image Include="res\ui\blue_block.bmp" />

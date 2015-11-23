@@ -22,6 +22,8 @@
 #define HERO_SIZE_X          54
 #define HERO_SIZE_Y          62
 #define HERO_MAX_FRAME_NUM   4
+#define HERO_MAX_FRAME_UP    7
+#define HERO_MAX_FRAME_DOWN  1
 #define BACKGROUND_SIZE_X    480
 #define BACKGROUND_SIZE_Y    640
 #define BUILDING_SIZE_X      500
@@ -32,6 +34,9 @@
 #define BLOCK_SIZE_Y         65
 #define GAME_STATUS_SIZE_X   40
 #define GAME_STATUS_SIZE_Y   30
+#define HERO_TO_GROUND       120
+
+#define HERO_MAX_FRAME       HERO_MAX_FRAME_NUM * HERO_MAX_FRAME_UP * HERO_MAX_FRAME_DOWN
 
 /*英雄结构体，英雄位图、位置、大小*/
 typedef struct
@@ -40,6 +45,7 @@ typedef struct
 	POINT	pos;
 	SIZE	size;
 	int     curFrameIndex;
+	int     Status;
 	int     maxFrameSize;
 }Hero;
 
@@ -85,17 +91,18 @@ typedef struct
 
 /*全局变量*/
 static TCHAR szWindowClass[] = _T("win32app");
-static TCHAR szTitle[] = _T("尖峰时刻");
+static TCHAR szTitle[] = _T("Jetpack Mouseride");
 
 /*声明位图句柄*/
 
 HBITMAP m_hBuildingBmp;
 HBITMAP m_hHeroBmp;
+HBITMAP m_hHeroUpBmp;
+HBITMAP m_hHeroDownBmp;
 HBITMAP m_hGameStatusBmp;
 HBITMAP m_hBackgroundBmp[BACKGROUND_COLOR_NUM];
 HBITMAP	m_hBlockBmp[BLOCK_COLOR_NUM];
 HBITMAP	m_hRoofkBmp[ROOF_COLOR_NUM];
-
 
 /*定义方块颜色数组，与m_hBlockBmp[BLOCK_COLOR_NUM]个数对应，0表示蓝色方块，1表示绿色方块，2表示橙色方块，3表示粉色方块*/
 int	m_blockBmpNames[] = {IDB_BLUE_BLOCK, IDB_GREEN_BLOCK, IDB_ORANGE_BLOCK, IDB_PINK_BLOCK};
@@ -126,7 +133,7 @@ Parameter:
 	curFrameIndex当前帧
 	maxFrameSize最大帧率
 *************************************************/ 
-Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int curFrameIndex, int maxFrameSize);
+Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int curFrameIndex, int Status, int maxFrameSize);
 
 Background CreateBackground(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
 

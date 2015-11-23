@@ -3,7 +3,7 @@
 #include <cmath>
 #include <algorithm>
 
-const int Gravity = 10;
+const int Gravity = 2;
 
 using namespace std;
 

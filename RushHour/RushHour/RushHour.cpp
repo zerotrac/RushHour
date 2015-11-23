@@ -4,6 +4,9 @@
 #include "Random.h"
 #include "Jumping.h"
 
+BOOL IsOnFire = FALSE;
+INT HeroVelocity = 0;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	srand(time(0));
@@ -123,8 +126,10 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	}
 	//加载Building位图
 	m_hBuildingBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BUILDING));
-	//加载Building位图
+	//加载英雄位图
 	m_hHeroBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERO));
+	m_hHeroUpBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROUP));
+	m_hHeroDownBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERODOWN));
 	//加载游戏状态位图
 	m_hGameStatusBmp =  LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_GAME_STATUS));
 	//加载Block位图
@@ -139,7 +144,7 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		m_hRoofkBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_roofBmpNames[k]));
 	}
 	//创建英雄、建筑
-	m_hero = CreateHero(WNDWIDTH / 4, WNDHEIGHT - 120, HERO_SIZE_X, HERO_SIZE_Y, m_hHeroBmp, 0, HERO_MAX_FRAME_NUM);
+	m_hero = CreateHero(WNDWIDTH / 4, WNDHEIGHT - HERO_TO_GROUND, HERO_SIZE_X, HERO_SIZE_Y, m_hHeroBmp, 0, 0, HERO_MAX_FRAME_NUM);
 	//m_building = CreateBuilding(0, 70, BUILDING_SIZE_X, BUILDING_SIZE_Y, m_hBuildingBmp);
 	//创建背景
 	for (k = 0; k < MAX_BACKGROUND_NUM; k++)
@@ -198,13 +203,16 @@ VOID Render(HWND hWnd)
 
 	//绘制Hero到缓存
 	SelectObject(hdcBmp, m_hero.hBmp);
+	int HeroBitLabel;
+	if (m_hero.Status == 0) HeroBitLabel = m_hero.curFrameIndex % HERO_MAX_FRAME_NUM;
+	if (m_hero.Status == 1) HeroBitLabel = HERO_MAX_FRAME_NUM + m_hero.curFrameIndex % HERO_MAX_FRAME_UP;
+	if (m_hero.Status == 2) HeroBitLabel = HERO_MAX_FRAME_NUM + HERO_MAX_FRAME_UP + m_hero.curFrameIndex % HERO_MAX_FRAME_DOWN;
 	TransparentBlt(
 		hdcBuffer, m_hero.pos.x, m_hero.pos.y,
 		m_hero.size.cx, m_hero.size.cy,
-		hdcBmp, 0, m_hero.size.cy * m_hero.curFrameIndex, m_hero.size.cx, m_hero.size.cy,
+		hdcBmp, 0, m_hero.size.cy * HeroBitLabel, m_hero.size.cx, m_hero.size.cy,
 		RGB(255, 255, 255)
 		);
-
 	//绘制地形
 	//int k;
 	/*for (k = 0; k < MAX_TERRIAN_NUM; k++)
@@ -255,7 +263,7 @@ VOID Render(HWND hWnd)
 	EndPaint(hWnd, &ps);
 }
 
-Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int curFrameIndex, int maxFrameSize)
+Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int curFrameIndex, int Status, int maxFrameSize)
 {
 	Hero hero;
 	hero.hBmp = hBmp;
@@ -264,6 +272,7 @@ Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int 
 	hero.size.cx = sizeX;
 	hero.size.cy = sizeY;
 	hero.curFrameIndex = curFrameIndex;
+	hero.Status = Status;
 	hero.maxFrameSize = maxFrameSize;
 	return hero;
 }
@@ -341,10 +350,39 @@ VOID HeroUpdate()
 	//TODO
 	//更新位置
 	//m_hero.pos.x += 1;
-	m_hero.pos.x = m_hero.pos.x >= WNDWIDTH ? 0 : m_hero.pos.x;
+	//m_hero.pos.x = m_hero.pos.x >= WNDWIDTH ? 0 : m_hero.pos.x;
 	//更新动作
+	int HeroAcceleration;
+	if (IsOnFire)
+	{
+		HeroAcceleration = -Gravity;
+		if (HeroVelocity > 0) HeroAcceleration = -1.5 * Gravity;
+		m_hero.Status = 1;
+	}
+	else
+	{
+		HeroAcceleration = Gravity;
+		if (HeroVelocity < 0) HeroAcceleration = 1.5 * Gravity;
+		m_hero.Status = 2;
+	}
+	int HeroDisplacement = HeroVelocity + 0.5 * HeroAcceleration;
+	HeroVelocity += HeroAcceleration;
+	int HeroPosY = m_hero.pos.y + HeroDisplacement;
+	if (HeroPosY < 0)
+	{
+		HeroPosY = 0;
+		HeroVelocity = 0;
+	}
+	else if (HeroPosY > WNDHEIGHT - HERO_TO_GROUND)
+	{
+		HeroPosY = WNDHEIGHT - HERO_TO_GROUND;
+		HeroVelocity = 0;
+		m_hero.Status = 0;
+	}
+	m_hero.pos.y = HeroPosY;
+
 	++m_hero.curFrameIndex;
-	m_hero.curFrameIndex = m_hero.curFrameIndex >= m_hero.maxFrameSize ? 0 : m_hero.curFrameIndex;
+	m_hero.curFrameIndex = m_hero.curFrameIndex >= HERO_MAX_FRAME ? 0 : m_hero.curFrameIndex;
 }
 
 VOID BackgroundUpdate()
@@ -352,7 +390,7 @@ VOID BackgroundUpdate()
 	int k;
 	for(k = 0; k < MAX_BACKGROUND_NUM; k++)
 	{
-		m_background[k].pos.x -= 10;
+		m_background[k].pos.x -= 16;
 		if (m_background[k].pos.x + m_background[k].size.cx < 0)
 		{
 			m_background[k].pos.x += MAX_BACKGROUND_NUM * BACKGROUND_SIZE_X;
@@ -400,7 +438,8 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 	case VK_UP:
-		m_hero.pos.y -= 50;
+		//m_hero.pos.y -= 50;
+		IsOnFire = true;
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	case VK_DOWN:
@@ -417,7 +456,8 @@ VOID KeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 	case VK_UP:
-		m_hero.pos.y += 50;
+		//m_hero.pos.y += 50;
+		IsOnFire = false;
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	case VK_DOWN:
