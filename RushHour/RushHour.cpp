@@ -6,6 +6,7 @@
 
 BOOL IsOnFire = FALSE;
 BOOL LeftKeyDown = FALSE;
+BOOL GameStart = FALSE;
 INT HeroVelocity = 0;
 INT ScorePerFrame = 4;
 
@@ -94,11 +95,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case WM_KEYDOWN:
 			//键盘按下事件
-			KeyDown(hWnd, wParam, lParam);
+			if (GameStart) KeyDown(hWnd, wParam, lParam);
 			break;
 		case WM_KEYUP:
 			//键盘松开事件
-			KeyUp(hWnd, wParam, lParam);
+			if (GameStart) KeyUp(hWnd, wParam, lParam);
 			break;
 		case WM_MOUSEMOVE:
 			//鼠标移动事件
@@ -134,13 +135,29 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 	//加载英雄位图
 	m_hHeroBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERO));
-	m_hHeroUpBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROUP));
-	m_hHeroDownBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERODOWN));
-	//m_hero = CreateHero(WNDWIDTH / 4, WNDHEIGHT - HERO_TO_GROUND, HERO_SIZE_X, HERO_SIZE_Y, m_hHeroBmp, 0, 0, HERO_MAX_FRAME_NUM);
-
+	//m_hHeroUpBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROUP));
+	//m_hHeroDownBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERODOWN));
+	m_hero = CreateHero(WNDWIDTH / 4, WNDHEIGHT - HERO_TO_GROUND, HERO_SIZE_X, HERO_SIZE_Y, m_hHeroBmp, 0, 0, HERO_MAX_FRAME_NUM);
+	m_hCoinBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COIN));
+	m_coin = CreateCoin(100, 100, COIN_SIZE, COIN_SIZE, m_hCoinBmp);
 	//加载游戏状态位图
-	m_hGameStatusBmp =  LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_GAME_STATUS));
+	m_hGameStatusBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_GAME_STATUS));
 	//m_gameStatus = CreateGameStatus(10, 8, GAME_STATUS_SIZE_X, GAME_STATUS_SIZE_Y, m_hGameStatusBmp);
+
+	
+	for (int k = 0; k < 10; k++)
+	{
+		if (k == 0)
+		{
+			CoinPosition[k][0] = GetRandomInt(WNDWIDTH * 2, WNDWIDTH * 3);
+		}
+		else
+		{
+			CoinPosition[k][0] = CoinPosition[k - 1][0] + GetRandomInt(WNDWIDTH / 4, WNDWIDTH);
+		}
+		CoinPosition[k][1] = GetRandomInt(0, WNDHEIGHT - COIN_SIZE * 8);
+		Transform(k, GetRandomInt(0, 25));
+	}
 
 	//加载背景位图
 	int k;
@@ -159,6 +176,8 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	m_others[0] = CreateOthers(WNDWIDTH - 425, 0, 425, 460, m_hOthersBmp[0]);
 	m_hOthersBmp[1] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[1]));
 	m_others[1] = CreateOthers(250, 100, 450 * 1.2, 250 * 1.2, m_hOthersBmp[1]);
+	//m_hOthersBmp[2] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[2]));
+	//m_others[2] = CreateOthers(WNDWIDTH / 4 - 20, WNDHEIGHT - HERO_TO_GROUND, 115, 108, m_hOthersBmp[2]);
 	for (k = 0; k < BUTTON_NUM * 2; k++)
 	{
 		m_hButtonBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_buttonBmpNames[k]));
@@ -182,7 +201,7 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		m_hRoofkBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_roofBmpNames[k]));
 	}*/
 	
-	for (int k = 0; k < OTHERS_NUM * 2; k++)
+	for (int k = 0; k < OTHERS_NUM; k++)
 	{
 		m_hOthersBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[k]));
 	}
@@ -200,7 +219,7 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	//创建游戏状态
 	
 	//启动计时器
-	//SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
+	SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
 	//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 }
 
@@ -230,6 +249,23 @@ VOID Render(HWND hWnd)
 		background.size.cx, background.size.cy,
 		hdcBmp, 0, 0, SRCCOPY);
 	}
+	SelectObject(hdcBmp, m_coin.hBmp);
+	for (int k = 0; k < 10; k++)
+	{
+		for (int i = 0; i < 7; i++)
+			for (int j = 0; j < 5; j++)
+			{
+				if (AlphaCoin[k][i][j])
+				{
+					TransparentBlt(
+						hdcBuffer, CoinPosition[k][0] + j * COIN_SIZE, CoinPosition[k][1] + i * COIN_SIZE,
+						m_coin.size.cx, m_coin.size.cy,
+						hdcBmp, 0, 0, 50, 50,
+						RGB(255, 255, 255)
+					);
+				}
+			}
+	}
 	//绘制按钮到缓存
 	for (k = 0; k < OTHERS_NUM; k++)
 	{
@@ -244,12 +280,21 @@ VOID Render(HWND hWnd)
 				RGB(255, 255, 255)
 			);
 		}
-		else
+		else if (k == 1)
 		{
 			TransparentBlt(
 				hdcBuffer, others.pos.x, others.pos.y,
 				others.size.cx, others.size.cy,
 				hdcBmp, 0, 0, 450, 250,
+				RGB(255, 255, 255)
+			);
+		}
+		else
+		{
+			TransparentBlt(
+				hdcBuffer, others.pos.x, others.pos.y,
+				others.size.cx, others.size.cy,
+				hdcBmp, 0, 0, 115, 108,
 				RGB(255, 255, 255)
 			);
 		}
@@ -326,6 +371,7 @@ VOID Render(HWND hWnd)
 	SetTextColor(hdcBuffer, RGB(0, 0, 0));
 	SetBkMode(hdcBuffer, TRANSPARENT);
 	TextOut(hdcBuffer, 100, 15, szDist, wsprintf(szDist, _T("距离:%d"), m_gameStatus.totalDist));
+	TextOut(hdcBuffer, 100, 30, szDist, wsprintf(szDist, _T("金币:%d"), m_gameStatus.totalCoin));
 
 	//最后将所有的信息绘制到屏幕上
 	BitBlt(hdc, 0, 0, WNDWIDTH, WNDHEIGHT, hdcBuffer, 0, 0, SRCCOPY);
@@ -351,6 +397,17 @@ Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int 
 	hero.Status = Status;
 	hero.maxFrameSize = maxFrameSize;
 	return hero;
+}
+
+Coin CreateCoin(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp)
+{
+	Coin coin;
+	coin.hBmp = hBmp;
+	coin.pos.x = posX;
+	coin.pos.y = posY;
+	coin.size.cx = sizeX;
+	coin.size.cy = sizeY;
+	return coin;
 }
 
 Background CreateBackground(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp)
@@ -407,6 +464,7 @@ GameStatus CreateGameStatus(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMA
 	gameStatus.size.cy = sizeY;
 	gameStatus.hBmp = hBmp;
 	gameStatus.totalDist = 0;
+	gameStatus.totalCoin = 0;
 	gameStatus.isPaused = false;
 	return gameStatus;
 }
@@ -436,14 +494,49 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		HeroUpdate();
 		BackgroundUpdate();
 		TerrianUpdate();
-		GameStatusUpdate();
+		if (GameStart)
+		{
+			GameStatusUpdate();
+			OthersUpdate();
+			CoinUpdate();
+		}
 	}
 	if (wParam == SCORE_ID)
 	{
 		//GameStatusUpdate();
-		ScorePerFrame++;
+		//ScorePerFrame++;
 	}
 	InvalidateRect(hWnd, NULL, FALSE);
+}
+
+VOID CoinUpdate()
+{
+	for (int k = 0; k < 10; k++)
+	{
+		CoinPosition[k][0] -= ScorePerFrame * 4;
+		if (CoinPosition[k][0] + COIN_SIZE * 5 < 0)
+		{
+			int prev = k - 1;
+			if (prev == -1) prev = 9;
+			CoinPosition[k][0] = CoinPosition[prev][0] + GetRandomInt(WNDWIDTH / 4, WNDWIDTH);
+			CoinPosition[k][1] = GetRandomInt(0, WNDHEIGHT - COIN_SIZE * 8);
+			Transform(k, GetRandomInt(0, 25));
+		}
+	}
+}
+
+VOID OthersUpdate()
+{
+	INT delta = 15;
+	if (m_others[1].pos.y + m_others[1].size.cy > 0) m_others[1].pos.y -= delta;
+	if (m_others[0].pos.x < WNDWIDTH)
+	{
+		m_others[0].pos.x += delta;
+		for (int i = 0; i < BUTTON_NUM * 2; i++)
+		{
+			m_button[i].pos.x += delta;
+		}
+	}
 }
 
 VOID HeroUpdate()
@@ -484,6 +577,22 @@ VOID HeroUpdate()
 
 	++m_hero.curFrameIndex;
 	m_hero.curFrameIndex = m_hero.curFrameIndex >= HERO_MAX_FRAME ? 0 : m_hero.curFrameIndex;
+
+	for (int k = 0; k < 10; k++)
+		for (int i = 0; i < 7; i++)
+			for (int j = 0; j < 5; j++)
+			{
+				if (AlphaCoin[k][i][j])
+				{
+					if (Collision(m_hero,
+								  CoinPosition[k][0] +  j      * COIN_SIZE, CoinPosition[k][1] +  i      * COIN_SIZE,
+								  CoinPosition[k][0] + (j + 1) * COIN_SIZE, CoinPosition[k][1] + (i + 1) * COIN_SIZE))
+					{
+						AlphaCoin[k][i][j] = 0;
+						m_gameStatus.totalCoin++;
+					}
+				}
+			}
 }
 
 VOID BackgroundUpdate()
@@ -496,6 +605,7 @@ VOID BackgroundUpdate()
 		{
 			m_background[k].pos.x += MAX_BACKGROUND_NUM * BACKGROUND_SIZE_X;
 			int randk = GetRandomInt(0, BACKGROUND_COLOR_NUM - 1);
+			if (!GameStart) randk = 0;
 			m_background[k].hBmp = m_hBackgroundBmp[randk];
 		}
 	}
@@ -527,8 +637,8 @@ BOOL Paused(POINT ptMouse)
 
 	rPause.left = m_gameStatus.pos.x;
 	rPause.top = m_gameStatus.pos.y;
-	rPause.right = m_gameStatus.size.cx;
-	rPause.bottom = m_gameStatus.size.cy;
+	rPause.right = m_gameStatus.pos.x + m_gameStatus.size.cx;
+	rPause.bottom = m_gameStatus.pos.y + m_gameStatus.size.cy;
 
 	return PtInRect(&rPause, ptMouse);
 }
@@ -586,33 +696,34 @@ VOID MouseMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	POINT ptMouse;
 	ptMouse.x = LOWORD(lParam);
 	ptMouse.y = HIWORD(lParam);
-
-	//320 * 90
-	for (int i = 0; i < BUTTON_NUM * 2; i += 2)
+	if (!GameStart)
 	{
-		int group = i / 2;
-		if(MouseInButton(ptMouse, m_button[i]))
+		for (int i = 0; i < BUTTON_NUM * 2; i += 2)
 		{
-			m_button[i].active = FALSE;
-			m_button[i + 1].active = TRUE;
-			if (LeftKeyDown)
+			int group = i / 2;
+			if(MouseInButton(ptMouse, m_button[i]))
 			{
-				m_button[i].pos.x = m_button[i + 1].pos.x = WNDWIDTH - 340 + 16;
-				m_button[i].pos.y = m_button[i + 1].pos.y = group * 90 + 5 + 4.5;
-				m_button[i].size.cx = m_button[i + 1].size.cx = 320 - 16 * 2;
-				m_button[i].size.cy = m_button[i + 1].size.cy = 90 - 4.5 * 2;
+				m_button[i].active = FALSE;
+				m_button[i + 1].active = TRUE;
+				if (LeftKeyDown)
+				{
+					m_button[i].pos.x = m_button[i + 1].pos.x = WNDWIDTH - 340 + 16;
+					m_button[i].pos.y = m_button[i + 1].pos.y = group * 90 + 5 + 4.5;
+					m_button[i].size.cx = m_button[i + 1].size.cx = 320 - 16 * 2;
+					m_button[i].size.cy = m_button[i + 1].size.cy = 90 - 4.5 * 2;
+				}
 			}
-		}
-		else
-		{
-			m_button[i].active = TRUE;
-			m_button[i + 1].active = FALSE;
-			if (LeftKeyDown)
+			else
 			{
-				m_button[i].pos.x = m_button[i + 1].pos.x = WNDWIDTH - 340;
-				m_button[i].pos.y = m_button[i + 1].pos.y = group * 90 + 5;
-				m_button[i].size.cx = m_button[i + 1].size.cx = 320;
-				m_button[i].size.cy = m_button[i + 1].size.cy = 90;
+				m_button[i].active = TRUE;
+				m_button[i + 1].active = FALSE;
+				if (LeftKeyDown)
+				{
+					m_button[i].pos.x = m_button[i + 1].pos.x = WNDWIDTH - 340;
+					m_button[i].pos.y = m_button[i + 1].pos.y = group * 90 + 5;
+					m_button[i].size.cx = m_button[i + 1].size.cx = 320;
+					m_button[i].size.cy = m_button[i + 1].size.cy = 90;
+				}
 			}
 		}
 	}
@@ -621,13 +732,28 @@ VOID MouseMove(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 VOID LButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-	for (int i = 0; i < BUTTON_NUM * 2; i += 2)
+	POINT ptMouse;
+	ptMouse.x = LOWORD(lParam);
+	ptMouse.y = HIWORD(lParam);
+
+	if (!GameStart)
 	{
-		int group = i / 2;
-		m_button[i].pos.x = m_button[i + 1].pos.x = WNDWIDTH - 340;
-		m_button[i].pos.y = m_button[i + 1].pos.y = group * 90 + 5;
-		m_button[i].size.cx = m_button[i + 1].size.cx = 320;
-		m_button[i].size.cy = m_button[i + 1].size.cy = 90;
+		for (int i = 0; i < BUTTON_NUM * 2; i += 2)
+		{
+			int group = i / 2;
+			m_button[i].pos.x = m_button[i + 1].pos.x = WNDWIDTH - 340;
+			m_button[i].pos.y = m_button[i + 1].pos.y = group * 90 + 5;
+			m_button[i].size.cx = m_button[i + 1].size.cx = 320;
+			m_button[i].size.cy = m_button[i + 1].size.cy = 90;
+		}
+		if (MouseInButton(ptMouse, m_button[0]))
+		{
+			GameStart = TRUE;
+			m_button[0].active = TRUE;
+			m_button[1].active = FALSE;
+			m_gameStatus = CreateGameStatus(10, 8, GAME_STATUS_SIZE_X, GAME_STATUS_SIZE_Y, m_hGameStatusBmp);
+			SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
+		}
 	}
 	InvalidateRect(hWnd, NULL, FALSE);
 }
@@ -656,9 +782,8 @@ VOID LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		}
 		InvalidateRect(hWnd, NULL, FALSE);
 	}
-	else
+	else if (!GameStart)
 	{
-		//m_button[k] = CreateButton(WNDWIDTH  - 340, group * 90 + 5, 320, 90, m_hButtonBmp[k], TRUE);
 		for (int i = 0; i < BUTTON_NUM * 2; i += 2)
 		{
 			int group = i / 2;

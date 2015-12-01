@@ -10,6 +10,7 @@
 #define TIMER_ELAPSE         40
 #define SCORE_ID             2
 #define SCORE_ELAPSE         10000
+
 #define WNDWIDTH             1280
 #define WNDHEIGHT            640
 #define BACKGROUND_COLOR_NUM 2
@@ -18,7 +19,7 @@
 #define MAX_TERRIAN_NUM      10
 #define MAX_BACKGROUND_NUM   5
 #define BUTTON_NUM           5
-#define OTHERS_NUM           2
+#define OTHERS_NUM           3
 
 //定义资源的尺寸         
 #define HERO_SIZE_X          54
@@ -26,6 +27,7 @@
 #define HERO_MAX_FRAME_NUM   4
 #define HERO_MAX_FRAME_UP    7
 #define HERO_MAX_FRAME_DOWN  1
+#define COIN_SIZE            30
 #define BACKGROUND_SIZE_X    480
 #define BACKGROUND_SIZE_Y    640
 #define BUILDING_SIZE_X      500
@@ -61,6 +63,13 @@ typedef struct
 	SIZE    size;
 }Background;
 
+typedef struct
+{
+	HBITMAP hBmp;
+	POINT pos;
+	SIZE size;
+}Coin;
+
 /*背景建筑结构体，建筑位图、位置、大小、类型*/
 typedef struct
 {
@@ -91,6 +100,7 @@ typedef struct
 	SIZE	size;
 	BOOL	isPaused;
 	int     totalDist;
+	int     totalCoin;
 }GameStatus;
 
 typedef struct
@@ -118,12 +128,13 @@ HBITMAP m_hBuildingBmp;
 HBITMAP m_hHeroBmp;
 HBITMAP m_hHeroUpBmp;
 HBITMAP m_hHeroDownBmp;
+HBITMAP m_hCoinBmp;
 HBITMAP m_hGameStatusBmp;
 HBITMAP m_hBackgroundBmp[BACKGROUND_COLOR_NUM];
 HBITMAP	m_hBlockBmp[BLOCK_COLOR_NUM];
 HBITMAP	m_hRoofkBmp[ROOF_COLOR_NUM];
 HBITMAP m_hButtonBmp[BUTTON_NUM * 2];
-HBITMAP m_hOthersBmp[OTHERS_NUM];
+HBITMAP m_hOthersBmp[OTHERS_NUM + 2];
 
 /*定义方块颜色数组，与m_hBlockBmp[BLOCK_COLOR_NUM]个数对应，0表示蓝色方块，1表示绿色方块，2表示橙色方块，3表示粉色方块*/
 int	m_blockBmpNames[] = {IDB_BLUE_BLOCK, IDB_GREEN_BLOCK, IDB_ORANGE_BLOCK, IDB_PINK_BLOCK};
@@ -136,10 +147,11 @@ int m_buttonBmpNames[] = {IDB_BUTTON11, IDB_BUTTON12,
 						  IDB_BUTTON31, IDB_BUTTON32,
 						  IDB_BUTTON41, IDB_BUTTON42,
 						  IDB_BUTTON51, IDB_BUTTON52};
-int m_othersBmpNames[] = {IDB_BACKBOARD, IDB_JETPACK};
+int m_othersBmpNames[] = {IDB_BACKBOARD, IDB_JETPACK, IDB_MOUSEHOLE};
 
 /*声明英雄、建筑、地形、游戏状态*/
 Hero          m_hero;
+Coin          m_coin;
 Building      m_building;
 Terrian       m_terrian[MAX_TERRIAN_NUM];
 Background    m_background[MAX_BACKGROUND_NUM];
@@ -162,6 +174,7 @@ Parameter:
 	maxFrameSize最大帧率
 *************************************************/ 
 Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int curFrameIndex, int Status, int maxFrameSize);
+Coin CreateCoin(LONG posX, LONG poxY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
 
 Background CreateBackground(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
 
@@ -212,6 +225,9 @@ VOID TerrianUpdate();
 //游戏状态更新
 VOID GameStatusUpdate();
 //判断是否点击暂停
+VOID OthersUpdate();
+VOID CoinUpdate();
+
 BOOL Paused(POINT);
 //键盘按下事件处理
 VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam);
