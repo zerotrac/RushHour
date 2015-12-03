@@ -9,7 +9,9 @@
 #define TIMER_ID             1
 #define TIMER_ELAPSE         40
 #define SCORE_ID             2
-#define SCORE_ELAPSE         10000
+#define SCORE_ELAPSE         15000
+#define ENDING_ID            3
+#define ENDING_ELAPSE        300
 
 #define WNDWIDTH             1280
 #define WNDHEIGHT            640
@@ -43,6 +45,8 @@
 #define HERO_TO_GROUND       120
 
 #define HERO_MAX_FRAME       HERO_MAX_FRAME_NUM * HERO_MAX_FRAME_UP * HERO_MAX_FRAME_DOWN
+#define LASER_MAX_FRAME      16
+#define MAX_LASER_NUM        20
 
 /*英雄结构体，英雄位图、位置、大小*/
 typedef struct
@@ -53,8 +57,10 @@ typedef struct
 	int     curFrameIndex;
 	int     Status;
 	int     maxFrameSize;
+	int     invincible;
+	int     life;
+	BOOL    alive;
 }Hero;
-
 /*游戏背景结构体*/
 typedef struct
 {
@@ -62,14 +68,22 @@ typedef struct
 	POINT   pos;
 	SIZE    size;
 }Background;
-
 typedef struct
 {
 	HBITMAP hBmp;
 	POINT pos;
 	SIZE size;
 }Coin;
-
+typedef struct
+{
+	POINT pos;
+	SIZE sizeside;
+	SIZE sizemid;
+	int length;
+	BOOL used;
+	BOOL active;
+	BOOL blink;
+}Laser;
 /*背景建筑结构体，建筑位图、位置、大小、类型*/
 typedef struct
 {
@@ -77,7 +91,6 @@ typedef struct
 	POINT	pos;
 	SIZE	size;
 }Building;
-
 /*地形结构体，地形方块位图、屋顶位图、位置、大小、屋顶以及方块大小、方块个数*/
 typedef struct
 {
@@ -91,7 +104,6 @@ typedef struct
 	int     blockHeight;
 	int     blockNum;
 }Terrian;
-
 /*游戏状态结构体*/
 typedef struct
 {
@@ -102,7 +114,6 @@ typedef struct
 	int     totalDist;
 	int     totalCoin;
 }GameStatus;
-
 typedef struct
 {
 	HBITMAP hBmp;
@@ -110,14 +121,20 @@ typedef struct
 	SIZE size;
 	BOOL active;
 }Button;
-
 typedef struct
 {
 	HBITMAP hBmp;
 	POINT pos;
 	SIZE size;
 }Others;
+typedef struct
+{
+	POINT pos;
+	SIZE size;
+	INT countdown;
+	BOOL active;
 
+}Missile;
 /*全局变量*/
 static TCHAR szWindowClass[] = _T("win32app");
 static TCHAR szTitle[] = _T("Jetpack Mouseride");
@@ -128,6 +145,7 @@ HBITMAP m_hBuildingBmp;
 HBITMAP m_hHeroBmp;
 HBITMAP m_hHeroUpBmp;
 HBITMAP m_hHeroDownBmp;
+HBITMAP m_hHeroDieBmp[2];
 HBITMAP m_hCoinBmp;
 HBITMAP m_hGameStatusBmp;
 HBITMAP m_hBackgroundBmp[BACKGROUND_COLOR_NUM];
@@ -135,6 +153,10 @@ HBITMAP	m_hBlockBmp[BLOCK_COLOR_NUM];
 HBITMAP	m_hRoofkBmp[ROOF_COLOR_NUM];
 HBITMAP m_hButtonBmp[BUTTON_NUM * 2];
 HBITMAP m_hOthersBmp[OTHERS_NUM + 2];
+HBITMAP m_hLaserBmp[3];
+HBITMAP m_hMissileBmp[2];
+HBITMAP m_hScoreboardBmp;
+HBITMAP m_hShieldBmp;
 
 /*定义方块颜色数组，与m_hBlockBmp[BLOCK_COLOR_NUM]个数对应，0表示蓝色方块，1表示绿色方块，2表示橙色方块，3表示粉色方块*/
 int	m_blockBmpNames[] = {IDB_BLUE_BLOCK, IDB_GREEN_BLOCK, IDB_ORANGE_BLOCK, IDB_PINK_BLOCK};
@@ -148,6 +170,9 @@ int m_buttonBmpNames[] = {IDB_BUTTON11, IDB_BUTTON12,
 						  IDB_BUTTON41, IDB_BUTTON42,
 						  IDB_BUTTON51, IDB_BUTTON52};
 int m_othersBmpNames[] = {IDB_BACKBOARD, IDB_JETPACK, IDB_MOUSEHOLE};
+int m_laserBmpNames[] = {IDB_LASERU, IDB_LASERD, IDB_LASER};
+int m_missileBmpNames[] = {IDB_MISSILE, IDB_WARNING};
+int m_herodieBmpNames[] = {IDB_HEROD0, IDB_HEROD1};
 
 /*声明英雄、建筑、地形、游戏状态*/
 Hero          m_hero;
@@ -158,6 +183,9 @@ Background    m_background[MAX_BACKGROUND_NUM];
 GameStatus    m_gameStatus;
 Button        m_button[BUTTON_NUM * 2];
 Others        m_others[OTHERS_NUM];
+Laser         m_laser[MAX_LASER_NUM];
+Missile       m_missile;
+
 /*全局函数*/
 //窗体过程函数
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -175,12 +203,10 @@ Parameter:
 *************************************************/ 
 Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int curFrameIndex, int Status, int maxFrameSize);
 Coin CreateCoin(LONG posX, LONG poxY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
-
+Laser CreateLaser(LONG posX, LONG posY, LONG sizeXs, LONG sizeYs, LONG sizeXm, LONG sizeYm, int length);
 Background CreateBackground(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
-
 Button CreateButton(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, BOOL active);
 Others CreateOthers(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
-
 /*************************************************
 Fucntion : 创建背景建筑
 Parameter:
@@ -189,7 +215,6 @@ Parameter:
 	hBmp表示位图句柄
 *************************************************/ 
 Building CreateBuilding(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
-
 /*************************************************
 Fucntion : 创建游戏状态
 Parameter:
@@ -198,7 +223,6 @@ Parameter:
 	hBmp表示位图句柄
 *************************************************/ 
 GameStatus CreateGameStatus(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp);
-
 /*************************************************
 Fucntion : 创建单个地形
 Parameter:
@@ -211,6 +235,7 @@ Parameter:
 *************************************************/ 
 Terrian CreateTerrian(LONG posX, LONG posY, LONG sizeX, LONG sizeY, 
 					  HBITMAP hBlockBmp, HBITMAP hRoofBmp, int roofHeight, int blockHeight);
+Missile CreateMissile(LONG posX, LONG posY, LONG sizeX, LONG sizeY, BOOL active, int countdown);
 
 //双缓冲绘制
 VOID Render(HWND hWnd);
@@ -227,7 +252,8 @@ VOID GameStatusUpdate();
 //判断是否点击暂停
 VOID OthersUpdate();
 VOID CoinUpdate();
-
+VOID LaserUpdate();
+VOID MissileUpdate();
 BOOL Paused(POINT);
 //键盘按下事件处理
 VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam);
