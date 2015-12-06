@@ -154,9 +154,12 @@ HBITMAP	m_hRoofkBmp[ROOF_COLOR_NUM];
 HBITMAP m_hButtonBmp[BUTTON_NUM * 2];
 HBITMAP m_hOthersBmp[OTHERS_NUM + 2];
 HBITMAP m_hLaserBmp[3];
-HBITMAP m_hMissileBmp[2];
+HBITMAP m_hMissileBmp[3];
 HBITMAP m_hScoreboardBmp;
 HBITMAP m_hShieldBmp;
+HBITMAP m_hLifeBmp;
+HBITMAP m_hNumberBmp[10];
+HBITMAP m_hSmallNumberBmp[10];
 
 /*定义方块颜色数组，与m_hBlockBmp[BLOCK_COLOR_NUM]个数对应，0表示蓝色方块，1表示绿色方块，2表示橙色方块，3表示粉色方块*/
 int	m_blockBmpNames[] = {IDB_BLUE_BLOCK, IDB_GREEN_BLOCK, IDB_ORANGE_BLOCK, IDB_PINK_BLOCK};
@@ -171,9 +174,10 @@ int m_buttonBmpNames[] = {IDB_BUTTON11, IDB_BUTTON12,
 						  IDB_BUTTON51, IDB_BUTTON52};
 int m_othersBmpNames[] = {IDB_BACKBOARD, IDB_JETPACK, IDB_MOUSEHOLE};
 int m_laserBmpNames[] = {IDB_LASERU, IDB_LASERD, IDB_LASER};
-int m_missileBmpNames[] = {IDB_MISSILE, IDB_WARNING};
+int m_missileBmpNames[] = {IDB_MISSILE, IDB_WARNING, IDB_WARNINGG};
 int m_herodieBmpNames[] = {IDB_HEROD0, IDB_HEROD1};
-
+int m_numberBmpNames[] = {IDB_NUM0, IDB_NUM1, IDB_NUM2, IDB_NUM3, IDB_NUM4, IDB_NUM5, IDB_NUM6, IDB_NUM7, IDB_NUM8, IDB_NUM9};
+int m_smallnumberBmpNames[] = {IDB_SNUM0, IDB_SNUM1, IDB_SNUM2, IDB_SNUM3, IDB_SNUM4, IDB_SNUM5, IDB_SNUM6, IDB_SNUM7, IDB_SNUM8, IDB_SNUM9};
 /*声明英雄、建筑、地形、游戏状态*/
 Hero          m_hero;
 Coin          m_coin;

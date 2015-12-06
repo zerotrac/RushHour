@@ -174,5 +174,5 @@ VOID GameParameterInitialize()
 	}
 	m_button[0].active = TRUE;
 	m_button[1].active = FALSE;
-	m_gameStatus = CreateGameStatus(10, 8, GAME_STATUS_SIZE_X, GAME_STATUS_SIZE_Y, m_hGameStatusBmp);
+	m_gameStatus = CreateGameStatus(WNDWIDTH - GAME_STATUS_SIZE_X - 10, 0, GAME_STATUS_SIZE_X, GAME_STATUS_SIZE_Y, m_hGameStatusBmp);
 }
