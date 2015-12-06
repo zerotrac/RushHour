@@ -8,8 +8,10 @@
 /*定义宏变量，WNDWIDTH、WNDHEIGHT为窗口的宽和高*/
 #define TIMER_ID             1
 #define TIMER_ELAPSE         40
-#define SCORE_ID             2
-#define SCORE_ELAPSE         15000
+//#define SCORE_ID             2
+//#define SCORE_ELAPSE         15000
+//#define GRAVITY_ID           3
+//#define GRAVITY_ELAPSE       30000
 #define ENDING_ID            3
 #define ENDING_ELAPSE        300
 

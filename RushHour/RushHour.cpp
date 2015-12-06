@@ -11,6 +11,7 @@ BOOL ScoreBoard = FALSE;
 int HeroVelocity = 0;
 int ScorePerFrame = 4;
 int CharacterCount = -1;
+int ElapseCount = 0;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -663,7 +664,7 @@ VOID Render(HWND hWnd)
 	if (!ScoreBoard && !m_hero.alive && m_hero.pos.y == WNDHEIGHT - HERO_TO_GROUND)
 	{
 		KillTimer(hWnd, TIMER_ID);
-		KillTimer(hWnd, SCORE_ID);
+		//KillTimer(hWnd, SCORE_ID);
 		SetTimer(hWnd, ENDING_ID, ENDING_ELAPSE, NULL);
 		Sleep(1500);
 		ScoreBoard = TRUE;
@@ -830,15 +831,18 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				}
 				m_missile.active = FALSE;
 			}
+			ElapseCount++;
+			if (ElapseCount % 375 == 0)
+			{
+				ScorePerFrame++;
+				if (LaserRandom >= 9) LaserRandom -= 3;
+				if (MissileRandom >= 90) MissileRandom -= 30;
+			}
+			if (ElapseCount % 750 == 0)
+			{
+				Gravity++;
+			}
 		}
-	}
-	if (wParam == SCORE_ID)
-	{
-		//GameStatusUpdate();
-		ScorePerFrame++;
-		if (LaserRandom >= 9) LaserRandom -= 3;
-		if (MissileRandom >= 90) MissileRandom -= 30;
-
 	}
 	if (wParam == ENDING_ID)
 	{
@@ -892,7 +896,7 @@ VOID LaserUpdate()
 				int length = GetRandomInt(WNDHEIGHT / 5, WNDHEIGHT / 5 * 3);
 				int position = GetRandomInt(0, WNDHEIGHT - length - 60);
 				m_laser[LaserAxis] = CreateLaser(WNDWIDTH, position, 39, 43, 18, 1, length, !m_hero.invincible);
-				LaserGenerate = 200;
+				LaserGenerate = 300;
 			}
 		}
 	}
@@ -950,22 +954,22 @@ VOID HeroUpdate()
 	//m_hero.pos.x += 1;
 	//m_hero.pos.x = m_hero.pos.x >= WNDWIDTH ? 0 : m_hero.pos.x;
 	//更新动作
-	int HeroAcceleration;
+	double HeroAcceleration;
 	if (IsOnFire)
 	{
-		HeroAcceleration = -Gravity;
-		if (HeroVelocity > 0) HeroAcceleration = -1.5 * Gravity;
+		HeroAcceleration = 1.0 * (-Gravity);
+		if (HeroVelocity > 0) HeroAcceleration = -2.0 * Gravity;
 		m_hero.Status = 1;
 	}
 	else
 	{
-		HeroAcceleration = Gravity;
-		if (HeroVelocity < 0) HeroAcceleration = 1.5 * Gravity;
+		HeroAcceleration = 1.0 * Gravity;
+		if (HeroVelocity < 0) HeroAcceleration = 2.0 * Gravity;
 		m_hero.Status = 2;
 	}
-	int HeroDisplacement = HeroVelocity + 0.5 * HeroAcceleration;
-	HeroVelocity += HeroAcceleration;
-	int HeroPosY = m_hero.pos.y + HeroDisplacement;
+	double HeroDisplacement = 1.0 * HeroVelocity + 0.5 * HeroAcceleration;
+	HeroVelocity += (int)HeroAcceleration;
+	int HeroPosY = m_hero.pos.y + (int)HeroDisplacement;
 	if (HeroPosY < 0)
 	{
 		HeroPosY = 0;
@@ -1072,9 +1076,11 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		HeroVelocity = 0;
 		ScorePerFrame = 4;
 		SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
-		SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
+		//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 		KillTimer(hWnd, ENDING_ID);
 		m_others[2] = CreateOthers(WNDWIDTH / 4, WNDHEIGHT - 160, 115 * 0.62, 108 * 0.62, m_hOthersBmp[2]);
+		Gravity = 2;
+		ElapseCount = 0;
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	case 'P':
@@ -1082,13 +1088,13 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		if (!m_gameStatus.isPaused)
 		{
 			KillTimer(hWnd, TIMER_ID);
-			KillTimer(hWnd, SCORE_ID);
+			//KillTimer(hWnd, SCORE_ID);
 			m_gameStatus.isPaused = TRUE;
 		}
 		else
 		{
 			SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
-			SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
+			//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 			m_gameStatus.isPaused = FALSE;
 		}
 		InvalidateRect(hWnd, NULL, FALSE);
@@ -1171,7 +1177,7 @@ VOID LButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		if (MouseInButton(ptMouse, m_button[0]))
 		{
 			GameParameterInitialize();
-			SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
+			//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 			GameStart = TRUE;
 		}
 	}
@@ -1191,13 +1197,13 @@ VOID LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		if (!m_gameStatus.isPaused)
 		{
 			KillTimer(hWnd, TIMER_ID);
-			KillTimer(hWnd, SCORE_ID);
+			//KillTimer(hWnd, SCORE_ID);
 			m_gameStatus.isPaused = TRUE;
 		}
 		else
 		{
 			SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
-			SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
+			//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 			m_gameStatus.isPaused = FALSE;
 		}
 		InvalidateRect(hWnd, NULL, FALSE);
