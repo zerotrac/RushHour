@@ -1,4 +1,6 @@
 #pragma once
+//#pragma comment(lib, "Gdi32.lib")
+//#pragma comment(lib, "user32.lib")
 
 #include "RushHour.h"
 #include "Random.h"
