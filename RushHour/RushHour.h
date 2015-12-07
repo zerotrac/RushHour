@@ -263,6 +263,7 @@ VOID MissileUpdate();
 BOOL Paused(POINT);
 //键盘按下事件处理
 VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam);
+VOID KeyDown2(HWND hWnd, WPARAM wParam, LPARAM lParam);
 //键盘松开事件处理
 VOID KeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam);
 //左鼠标点击事件

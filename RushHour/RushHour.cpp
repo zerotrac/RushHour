@@ -8,6 +8,13 @@ BOOL GameStart = FALSE;
 BOOL LeftKeyDown = FALSE;
 BOOL IsOnFire = FALSE;
 BOOL ScoreBoard = FALSE;
+BOOL AppStore = FALSE;
+
+BOOL LuckyCoin = FALSE;
+BOOL LaserInterference = FALSE;
+BOOL AntMan = FALSE;
+BOOL SoulRing = FALSE;
+
 int HeroVelocity = 0;
 int ScorePerFrame = 4;
 int CharacterCount = -1;
@@ -99,6 +106,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 			//键盘按下事件
 			if (GameStart) KeyDown(hWnd, wParam, lParam);
+			if (AppStore) KeyDown2(hWnd, wParam, lParam);
 			break;
 		case WM_KEYUP:
 			//键盘松开事件
@@ -298,18 +306,21 @@ VOID Render(HWND hWnd)
 			);
 		}
 	}
-	for (k = 0; k < BUTTON_NUM * 2; k++)
+	if (!AppStore)
 	{
-		Button button = m_button[k];
-		if (button.active)
+		for (k = 0; k < BUTTON_NUM * 2; k++)
 		{
-			SelectObject(hdcBmp, button.hBmp);
-			TransparentBlt(
-				hdcBuffer, button.pos.x, button.pos.y,
-				button.size.cx, button.size.cy,
-				hdcBmp, 0, 0, BUTTON_SIZE_X, BUTTON_SIZE_Y,
-				RGB(255, 255, 255)
-			);
+			Button button = m_button[k];
+			if (button.active)
+			{
+				SelectObject(hdcBmp, button.hBmp);
+				TransparentBlt(
+					hdcBuffer, button.pos.x, button.pos.y,
+					button.size.cx, button.size.cy,
+					hdcBmp, 0, 0, BUTTON_SIZE_X, BUTTON_SIZE_Y,
+					RGB(255, 255, 255)
+				);
+			}
 		}
 	}
 
@@ -599,7 +610,7 @@ VOID Render(HWND hWnd)
 	);
 
 	//绘制分数
-	TCHAR szDist[13];
+	TCHAR szDist[100];
 	SetTextColor(hdcBuffer, RGB(0, 0, 0));
 	SetBkMode(hdcBuffer, TRANSPARENT);
 
@@ -646,10 +657,72 @@ VOID Render(HWND hWnd)
 			);
 		}
 	}
-	//TextOut(hdcBuffer, 100, 15, szDist, wsprintf(szDist, _T("距离:%d"), m_gameStatus.totalDist));
-	//TextOut(hdcBuffer, 100, 30, szDist, wsprintf(szDist, _T("金币:%d"), m_gameStatus.totalCoin));
-	//TextOut(hdcBuffer, 100, 45, szDist, wsprintf(szDist, _T("生命:%d"), m_hero.life));
 
+	if (AppStore)
+	{
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 15, szDist, wsprintf(szDist, _T("幸运金币(C): "), m_gameStatus.totalDist));
+		if (!LuckyCoin)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 45, szDist, wsprintf(szDist, _T("每一枚金币都有概率变成幸运金币，"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 60, szDist, wsprintf(szDist, _T("它的价值等于5枚普通金币。"), m_gameStatus.totalDist));
+
+		TextOut(hdcBuffer, 950, 120, szDist, wsprintf(szDist, _T("电磁干扰器(E)："), m_gameStatus.totalDist));
+		if (!LaserInterference)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 150, szDist, wsprintf(szDist, _T("有概率使得激光失去效果，"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 165, szDist, wsprintf(szDist, _T("失去效果的激光可以直接穿过。"), m_gameStatus.totalDist));
+
+		TextOut(hdcBuffer, 950, 225, szDist, wsprintf(szDist, _T("蚁人(A)："), m_gameStatus.totalDist));
+		if (!AntMan)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 255, szDist, wsprintf(szDist, _T("召唤蚁人小伙伴入侵导弹，"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 270, szDist, wsprintf(szDist, _T("损坏的导弹飞行速度降低。"), m_gameStatus.totalDist));
+
+		TextOut(hdcBuffer, 950, 330, szDist, wsprintf(szDist, _T("灵魂之戒(S)："), m_gameStatus.totalDist));
+		if (!SoulRing)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 360, szDist, wsprintf(szDist, _T("游戏开始时减少一点生命值，"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 375, szDist, wsprintf(szDist, _T("但是无敌时间增加一倍。"), m_gameStatus.totalDist));
+
+		TextOut(hdcBuffer, 1110, 430, szDist, wsprintf(szDist, _T("Press B to return back"), m_gameStatus.totalDist));
+	}
 	//最后将所有的信息绘制到屏幕上
 	BitBlt(hdc, 0, 0, WNDWIDTH, WNDHEIGHT, hdcBuffer, 0, 0, SRCCOPY);
 
@@ -838,7 +911,7 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				if (LaserRandom >= 9) LaserRandom -= 3;
 				if (MissileRandom >= 90) MissileRandom -= 30;
 			}
-			if (ElapseCount % 750 == 0)
+			if (ElapseCount % 1125 == 0)
 			{
 				Gravity++;
 			}
@@ -896,7 +969,7 @@ VOID LaserUpdate()
 				int length = GetRandomInt(WNDHEIGHT / 5, WNDHEIGHT / 5 * 3);
 				int position = GetRandomInt(0, WNDHEIGHT - length - 60);
 				m_laser[LaserAxis] = CreateLaser(WNDWIDTH, position, 39, 43, 18, 1, length, !m_hero.invincible);
-				LaserGenerate = 300;
+				LaserGenerate = 200;
 			}
 		}
 	}
@@ -1103,6 +1176,30 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 }
+
+VOID KeyDown2(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+	switch (wParam)
+	{
+		case 'C':
+			LuckyCoin = ~LuckyCoin;
+			break;
+		case 'E':
+			LaserInterference = ~LaserInterference;
+			break;
+		case 'A':
+			AntMan = ~AntMan;
+			break;
+		case 'S':
+			SoulRing = ~SoulRing;
+			break;
+		case 'B':
+			AppStore = FALSE;
+			break;
+	}
+	InvalidateRect(hWnd, NULL, FALSE);
+}
+
 VOID KeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	//TODO
@@ -1174,11 +1271,15 @@ VOID LButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			m_button[i].size.cx = m_button[i + 1].size.cx = 320;
 			m_button[i].size.cy = m_button[i + 1].size.cy = 90;
 		}
-		if (MouseInButton(ptMouse, m_button[0]))
+		if (!AppStore && MouseInButton(ptMouse, m_button[0]))
 		{
 			GameParameterInitialize();
 			//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 			GameStart = TRUE;
+		}
+		if (MouseInButton(ptMouse, m_button[4]))
+		{
+			AppStore = TRUE;
 		}
 	}
 	InvalidateRect(hWnd, NULL, FALSE);
