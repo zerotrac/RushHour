@@ -45,7 +45,13 @@ const int Alphabet[36][5] = {{0x3F, 0x48, 0x48, 0x48, 0x3F}, //A
 int AlphaCoin[10][7][5] = {0};
 int CoinPosition[10][2];
 
-void Transform(int label, int num)
+int GetRandomInt(int RangeL, int RangeR)
+{
+	int randint = rand() % (RangeR - RangeL + 1) + RangeL;
+	return randint;
+}
+
+void Transform(int label, int num, BOOL LuckyCoin)
 {
 	int BinaryLine[8];
 	for (int i = 0; i < 5; i++)
@@ -59,6 +65,14 @@ void Transform(int label, int num)
 		for (int j = 1; j < 8; j++)
 		{
 			AlphaCoin[label][j - 1][i] = BinaryLine[j];
+			if (AlphaCoin[label][j - 1][i] && LuckyCoin)
+			{
+				int lucky = GetRandomInt(0, 8);
+				if (lucky == 0)
+				{
+					AlphaCoin[label][j - 1][i] = 3;
+				}
+			}
 		}
 	}
 }
@@ -87,6 +101,7 @@ int LaserCurrentFrame;
 int LaserRandom;
 int MissileGenerate;
 int MissileRandom;
+int CoinPerLife = 100;
 
 BOOL CheckCollision()
 {
@@ -119,9 +134,15 @@ BOOL CheckCollision()
 								  CoinPosition[k][0] +  j      * COIN_SIZE, CoinPosition[k][1] +  i      * COIN_SIZE,
 								  CoinPosition[k][0] + (j + 1) * COIN_SIZE, CoinPosition[k][1] + (i + 1) * COIN_SIZE, 1))
 					{
+						m_gameStatus.totalCoin += AlphaCoin[k][i][j];
+						m_gameStatus.currentCoin += AlphaCoin[k][i][j];
 						AlphaCoin[k][i][j] = 0;
-						m_gameStatus.totalCoin++;
-						if (m_hero.alive && m_gameStatus.totalCoin % 100 == 0) m_hero.life++;
+						if (m_hero.alive && m_gameStatus.currentCoin >= CoinPerLife)
+						{
+							m_hero.life++;
+							m_gameStatus.currentCoin -= CoinPerLife;
+							CoinPerLife += 50;
+						}
 					}
 				}
 			}
@@ -133,9 +154,15 @@ BOOL CheckCollision()
 VOID GameStatusInitialize()
 {
 	m_hero = CreateHero(WNDWIDTH / 4, WNDHEIGHT - HERO_TO_GROUND, HERO_SIZE_X, HERO_SIZE_Y, m_hHeroBmp, 0, 0, HERO_MAX_FRAME_NUM);
+	for (int k = 0; k < MAX_BACKGROUND_NUM; k++)
+	{
+		int randk = 0;
+		m_background[k] = CreateBackground(BACKGROUND_SIZE_X * k, 0, BACKGROUND_SIZE_X, BACKGROUND_SIZE_Y, m_hBackgroundBmp[randk]);
+	}
+}
 
-	m_missile = CreateMissile(0, 0, 0, 0, FALSE, 0);
-
+VOID GameParameterInitialize(BOOL LuckyCoin, BOOL SoulRing)
+{
 	for (int k = 0; k < 10; k++)
 	{
 		if (k == 0)
@@ -147,27 +174,21 @@ VOID GameStatusInitialize()
 			CoinPosition[k][0] = CoinPosition[k - 1][0] + GetRandomInt(WNDWIDTH / 3, WNDWIDTH);
 		}
 		CoinPosition[k][1] = GetRandomInt(0, WNDHEIGHT - COIN_SIZE * 8);
-		Transform(k, GetRandomInt(0, 25));
-	}
-	for (int k = 0; k < MAX_BACKGROUND_NUM; k++)
-	{
-		int randk = 0;
-		m_background[k] = CreateBackground(BACKGROUND_SIZE_X * k, 0, BACKGROUND_SIZE_X, BACKGROUND_SIZE_Y, m_hBackgroundBmp[randk]);
+		Transform(k, GetRandomInt(0, 25), LuckyCoin);
 	}
 	for (int k = 0; k < MAX_LASER_NUM; k++)
 	{
 		m_laser[k].active = FALSE;
 	}
-}
+	m_missile = CreateMissile(0, 0, 0, 0, FALSE, 0);
 
-VOID GameParameterInitialize()
-{
 	LaserGenerate = WNDWIDTH * 2;
 	LaserAxis = -1;
 	LaserCurrentFrame = 0;
 	LaserRandom = 30;
 	MissileGenerate = WNDWIDTH;
 	MissileRandom = 300;
+	CoinPerLife = 100;
 	for (int i = 0; i < MAX_LASER_NUM; i++)
 	{
 		m_laser[i].used = FALSE;
@@ -175,4 +196,5 @@ VOID GameParameterInitialize()
 	m_button[0].active = TRUE;
 	m_button[1].active = FALSE;
 	m_gameStatus = CreateGameStatus(WNDWIDTH - GAME_STATUS_SIZE_X - 10, 0, GAME_STATUS_SIZE_X, GAME_STATUS_SIZE_Y, m_hGameStatusBmp);
+	m_hero.life -= SoulRing;
 }

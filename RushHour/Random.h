@@ -6,8 +6,8 @@
 
 using namespace std;
 
-int GetRandomInt(int RangeL, int RangeR)
+/*int GetRandomInt(int RangeL, int RangeR)
 {
 	int randint = rand() % (RangeR - RangeL + 1) + RangeL;
 	return randint;
-}
+}*/

@@ -113,8 +113,9 @@ typedef struct
 	POINT   pos;
 	SIZE	size;
 	BOOL	isPaused;
-	int     totalDist;
+	double  totalDist;
 	int     totalCoin;
+	int     currentCoin;
 }GameStatus;
 typedef struct
 {
@@ -135,7 +136,6 @@ typedef struct
 	SIZE size;
 	INT countdown;
 	BOOL active;
-
 }Missile;
 /*全局变量*/
 static TCHAR szWindowClass[] = _T("win32app");
@@ -149,6 +149,7 @@ HBITMAP m_hHeroUpBmp;
 HBITMAP m_hHeroDownBmp;
 HBITMAP m_hHeroDieBmp[2];
 HBITMAP m_hCoinBmp;
+HBITMAP m_hLuckyBmp;
 HBITMAP m_hGameStatusBmp;
 HBITMAP m_hBackgroundBmp[BACKGROUND_COLOR_NUM];
 HBITMAP	m_hBlockBmp[BLOCK_COLOR_NUM];

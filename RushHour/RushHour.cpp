@@ -16,7 +16,7 @@ BOOL AntMan = FALSE;
 BOOL SoulRing = FALSE;
 
 int HeroVelocity = 0;
-int ScorePerFrame = 4;
+double ScorePerFrame = 4.0;
 int CharacterCount = -1;
 int ElapseCount = 0;
 
@@ -152,6 +152,7 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	//m_hero = CreateHero(WNDWIDTH / 4, WNDHEIGHT - HERO_TO_GROUND, HERO_SIZE_X, HERO_SIZE_Y, m_hHeroBmp, 0, 0, HERO_MAX_FRAME_NUM);
 	m_hCoinBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COIN));
 	m_coin = CreateCoin(100, 100, COIN_SIZE, COIN_SIZE, m_hCoinBmp);
+	m_hLuckyBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COINB));;
 	m_hLifeBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_LIFE));
 	//m_laser = CreateLaser(100, 100, 39, 43, 18, 1, 200);
 	//加载游戏状态位图
@@ -256,14 +257,31 @@ VOID Render(HWND hWnd)
 		background.size.cx, background.size.cy,
 		hdcBmp, 0, 0, SRCCOPY);
 	}
-	SelectObject(hdcBmp, m_coin.hBmp);
+
+	SelectObject(hdcBmp, m_gameStatus.hBmp);
+	TransparentBlt(hdcBuffer, m_gameStatus.pos.x, m_gameStatus.pos.y, m_gameStatus.size.cx, m_gameStatus.size.cy,
+		hdcBmp, 0, m_gameStatus.size.cy * m_gameStatus.isPaused,
+		m_gameStatus.size.cx, m_gameStatus.size.cy, RGB(255, 255, 255)
+	);
+
 	for (int k = 0; k < 10; k++)
 	{
 		for (int i = 0; i < 7; i++)
 			for (int j = 0; j < 5; j++)
 			{
-				if (AlphaCoin[k][i][j])
+				if (AlphaCoin[k][i][j] == 1)
 				{
+					SelectObject(hdcBmp, m_coin.hBmp);
+					TransparentBlt(
+						hdcBuffer, CoinPosition[k][0] + j * COIN_SIZE, CoinPosition[k][1] + i * COIN_SIZE,
+						m_coin.size.cx, m_coin.size.cy,
+						hdcBmp, 0, 0, 50, 50,
+						RGB(255, 255, 255)
+					);
+				}
+				else if (AlphaCoin[k][i][j] == 3)
+				{
+					SelectObject(hdcBmp, m_hLuckyBmp);
 					TransparentBlt(
 						hdcBuffer, CoinPosition[k][0] + j * COIN_SIZE, CoinPosition[k][1] + i * COIN_SIZE,
 						m_coin.size.cx, m_coin.size.cy,
@@ -272,56 +290,6 @@ VOID Render(HWND hWnd)
 					);
 				}
 			}
-	}
-	//绘制按钮到缓存
-	for (k = 0; k < OTHERS_NUM; k++)
-	{
-		Others others = m_others[k];
-		SelectObject(hdcBmp, others.hBmp);
-		if (k == 0)
-		{
-			TransparentBlt(
-				hdcBuffer, others.pos.x, others.pos.y,
-				others.size.cx, others.size.cy,
-				hdcBmp, 0, 0, 285, 462,
-				RGB(255, 255, 255)
-			);
-		}
-		else if (k == 1)
-		{
-			TransparentBlt(
-				hdcBuffer, others.pos.x, others.pos.y,
-				others.size.cx, others.size.cy,
-				hdcBmp, 0, 0, 450, 250,
-				RGB(255, 255, 255)
-			);
-		}
-		else
-		{
-			TransparentBlt(
-				hdcBuffer, others.pos.x, others.pos.y,
-				others.size.cx, others.size.cy,
-				hdcBmp, 0, 0, 115, 108,
-				RGB(255, 255, 255)
-			);
-		}
-	}
-	if (!AppStore)
-	{
-		for (k = 0; k < BUTTON_NUM * 2; k++)
-		{
-			Button button = m_button[k];
-			if (button.active)
-			{
-				SelectObject(hdcBmp, button.hBmp);
-				TransparentBlt(
-					hdcBuffer, button.pos.x, button.pos.y,
-					button.size.cx, button.size.cy,
-					hdcBmp, 0, 0, BUTTON_SIZE_X, BUTTON_SIZE_Y,
-					RGB(255, 255, 255)
-				);
-			}
-		}
 	}
 
 	for (int i = 0; i < 100; i++)
@@ -383,6 +351,59 @@ VOID Render(HWND hWnd)
 		}
 	}
 
+	
+
+	//绘制按钮到缓存
+	for (k = 0; k < OTHERS_NUM; k++)
+	{
+		Others others = m_others[k];
+		SelectObject(hdcBmp, others.hBmp);
+		if (k == 0)
+		{
+			TransparentBlt(
+				hdcBuffer, others.pos.x, others.pos.y,
+				others.size.cx, others.size.cy,
+				hdcBmp, 0, 0, 285, 462,
+				RGB(255, 255, 255)
+			);
+		}
+		else if (k == 1)
+		{
+			TransparentBlt(
+				hdcBuffer, others.pos.x, others.pos.y,
+				others.size.cx, others.size.cy,
+				hdcBmp, 0, 0, 450, 250,
+				RGB(255, 255, 255)
+			);
+		}
+		else
+		{
+			TransparentBlt(
+				hdcBuffer, others.pos.x, others.pos.y,
+				others.size.cx, others.size.cy,
+				hdcBmp, 0, 0, 115, 108,
+				RGB(255, 255, 255)
+			);
+		}
+	}
+	if (!AppStore)
+	{
+		for (k = 0; k < BUTTON_NUM * 2; k++)
+		{
+			Button button = m_button[k];
+			if (button.active)
+			{
+				SelectObject(hdcBmp, button.hBmp);
+				TransparentBlt(
+					hdcBuffer, button.pos.x, button.pos.y,
+					button.size.cx, button.size.cy,
+					hdcBmp, 0, 0, BUTTON_SIZE_X, BUTTON_SIZE_Y,
+					RGB(255, 255, 255)
+				);
+			}
+		}
+	}
+
 	//绘制Hero到缓存
 	if (m_hero.alive)
 	{
@@ -431,7 +452,7 @@ VOID Render(HWND hWnd)
 	{
 		SelectObject(hdcBmp, m_hScoreboardBmp);
 			TransparentBlt(
-				hdcBuffer, WNDWIDTH / 6, WNDHEIGHT / 10,
+				hdcBuffer, WNDWIDTH / 20, WNDHEIGHT / 10,
 				WNDWIDTH / 3 * 2, WNDHEIGHT / 3 * 2, hdcBmp, 0, 0, 581, 255,
 				RGB(255, 255, 255)
 			);
@@ -439,10 +460,10 @@ VOID Render(HWND hWnd)
 		char word9[] = "GAME OVER";
 		for (int k = 0; k < strlen(word9); k++)
 		{
-			Transform(9, word9[k] - 65);
+			Transform(9, word9[k] - 65, FALSE);
 			for (int i = 0; i < 7; i++)
 			{
-				int basex = WNDWIDTH / 4 + 80 + k * 55, basey = WNDHEIGHT / 4 + i * 10;
+				int basex = WNDWIDTH / 10 + 123 + k * 55, basey = WNDHEIGHT / 4 + i * 10;
 				for (int j = 0; j < 5; j++)
 				{
 					if (AlphaCoin[9][i][j])
@@ -459,10 +480,10 @@ VOID Render(HWND hWnd)
 		char word1[] = "DISTANCE";
 		for (int k = 0; k < strlen(word1); k++)
 		{
-			Transform(9, word1[k] - 65);
+			Transform(9, word1[k] - 65, FALSE);
 			for (int i = 0; i < 7; i++)
 			{
-				int basex = WNDWIDTH / 5 + 30 + k * 44, basey = WNDHEIGHT / 5 + 170 + i * 8;
+				int basex = WNDWIDTH / 20 + 80 + k * 44, basey = WNDHEIGHT / 5 + 170 + i * 8;
 				for (int j = 0; j < 5; j++)
 				{
 					if (AlphaCoin[9][i][j])
@@ -476,7 +497,7 @@ VOID Render(HWND hWnd)
 				}
 			}
 		}
-		int num1 = m_gameStatus.totalDist, cnt1 = -1;
+		int num1 = (int)m_gameStatus.totalDist, cnt1 = -1;
 		int numC1[5] = {0};
 		while (num1)
 		{
@@ -486,10 +507,10 @@ VOID Render(HWND hWnd)
 		reverse(numC1, numC1 + 5);
 		for (int k = 0; k < min(CharacterCount, 5); k++)
 		{
-			Transform(9, numC1[k] + 26);
+			Transform(9, numC1[k] + 26, FALSE);
 			for (int i = 0; i < 7; i++)
 			{
-				int basex = WNDWIDTH / 5 + 490 + k * 44, basey = WNDHEIGHT / 5 + 170 + i * 8;
+				int basex = WNDWIDTH / 5 + 340 + k * 44, basey = WNDHEIGHT / 5 + 170 + i * 8;
 				for (int j = 0; j < 5; j++)
 				{
 					if (AlphaCoin[9][i][j])
@@ -507,10 +528,10 @@ VOID Render(HWND hWnd)
 		for (int k = 0; k < strlen(word4); k++)
 		{
 			if (CharacterCount <= 5) break;
-			Transform(9, word4[k] - 65);
+			Transform(9, word4[k] - 65, FALSE);
 			for (int i = 0; i < 7; i++)
 			{
-				int basex = WNDWIDTH / 5 + 715 + k * 33, basey = WNDHEIGHT / 5 + 183 + i * 6;
+				int basex = WNDWIDTH / 5 + 565 + k * 33, basey = WNDHEIGHT / 5 + 183 + i * 6;
 				for (int j = 0; j < 5; j++)
 				{
 					if (AlphaCoin[9][i][j])
@@ -527,10 +548,10 @@ VOID Render(HWND hWnd)
 		char word2[] = "COINS";
 		for (int k = 0; k < strlen(word2); k++)
 		{
-			Transform(9, word2[k] - 65);
+			Transform(9, word2[k] - 65, FALSE);
 			for (int i = 0; i < 7; i++)
 			{
-				int basex = WNDWIDTH / 5 + 30 + k * 44, basey = WNDHEIGHT / 5 + 265 + i * 8;
+				int basex = WNDWIDTH / 20 + 80 + k * 44, basey = WNDHEIGHT / 5 + 265 + i * 8;
 				for (int j = 0; j < 5; j++)
 				{
 					if (AlphaCoin[9][i][j])
@@ -555,10 +576,10 @@ VOID Render(HWND hWnd)
 		for (int k = 0; k < 4; k++)
 		{
 			if (CharacterCount <= 6 + k) break;
-			Transform(9, numC2[k] + 26);
+			Transform(9, numC2[k] + 26, FALSE);
 			for (int i = 0; i < 7; i++)
 			{
-				int basex = WNDWIDTH / 5 + 534 + k * 44, basey = WNDHEIGHT / 5 + 265 + i * 8;
+				int basex = WNDWIDTH / 5 + 384 + k * 44, basey = WNDHEIGHT / 5 + 265 + i * 8;
 				for (int j = 0; j < 5; j++)
 				{
 					if (AlphaCoin[9][i][j])
@@ -575,17 +596,17 @@ VOID Render(HWND hWnd)
 		if (CharacterCount > 10)
 		{
 			TransparentBlt(
-				hdcBuffer, WNDWIDTH / 5 + 715, WNDHEIGHT / 5 + 290, 30, 30, hdcBmp, 0, 0, 50, 50,
+				hdcBuffer, WNDWIDTH / 5 + 565, WNDHEIGHT / 5 + 290, 30, 30, hdcBmp, 0, 0, 50, 50,
 				RGB(255, 255, 255)
 			);
 		}
 		char word3[] = "PRESS R TO RESTART";
 		for (int k = 0; k < strlen(word3); k++)
 		{
-			Transform(9, word3[k] - 65);
+			Transform(9, word3[k] - 65, FALSE);
 			for (int i = 0; i < 7; i++)
 			{
-				int basex = WNDWIDTH / 5 + 470 + k * 16, basey = WNDHEIGHT / 5 + 333 + i * 3;
+				int basex = WNDWIDTH / 10 + 445 + k * 16, basey = WNDHEIGHT / 5 + 333 + i * 3;
 				for (int j = 0; j < 5; j++)
 				{
 					if (AlphaCoin[9][i][j])
@@ -603,11 +624,7 @@ VOID Render(HWND hWnd)
 
 	//绘制游戏状态
 	//暂停或继续位图
-	SelectObject(hdcBmp, m_gameStatus.hBmp);
-	TransparentBlt(hdcBuffer, m_gameStatus.pos.x, m_gameStatus.pos.y, m_gameStatus.size.cx, m_gameStatus.size.cy,
-		hdcBmp, 0, m_gameStatus.size.cy * m_gameStatus.isPaused,
-		m_gameStatus.size.cx, m_gameStatus.size.cy, RGB(255, 255, 255)
-	);
+	
 
 	//绘制分数
 	TCHAR szDist[100];
@@ -617,7 +634,7 @@ VOID Render(HWND hWnd)
 	if (GameStart)
 	{
 		int m0, arr[10], arrcnt;
-		m0 = m_gameStatus.totalDist, arrcnt = 0;
+		m0 = (int)m_gameStatus.totalDist, arrcnt = 0;
 		for (int i = 1; i <= 5; i++)
 		{
 			arr[++arrcnt] = m0 % 10;
@@ -657,71 +674,72 @@ VOID Render(HWND hWnd)
 			);
 		}
 	}
+	//TextOut(hdcBuffer, 0, 200, szDist, wsprintf(szDist, _T("LuckyCoin = %d: "), LuckyCoin));
 
 	if (AppStore)
 	{
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
-		TextOut(hdcBuffer, 950, 15, szDist, wsprintf(szDist, _T("幸运金币(C): "), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 15, szDist, wsprintf(szDist, _T("幸运金币(C): ")));
 		if (!LuckyCoin)
 		{
 			SetTextColor(hdcBuffer, RGB(255, 0, 0));
-			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("未激活")));
 		}
 		else
 		{
 			SetTextColor(hdcBuffer, RGB(0, 255, 0));
-			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("已激活")));
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
-		TextOut(hdcBuffer, 950, 45, szDist, wsprintf(szDist, _T("每一枚金币都有概率变成幸运金币，"), m_gameStatus.totalDist));
-		TextOut(hdcBuffer, 950, 60, szDist, wsprintf(szDist, _T("它的价值等于5枚普通金币。"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 45, szDist, wsprintf(szDist, _T("每一枚金币都有概率变成幸运金币，")));
+		TextOut(hdcBuffer, 950, 60, szDist, wsprintf(szDist, _T("它的价值等于3枚普通金币。")));
 
-		TextOut(hdcBuffer, 950, 120, szDist, wsprintf(szDist, _T("电磁干扰器(E)："), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 120, szDist, wsprintf(szDist, _T("电磁干扰器(E)：")));
 		if (!LaserInterference)
 		{
 			SetTextColor(hdcBuffer, RGB(255, 0, 0));
-			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("未激活")));
 		}
 		else
 		{
 			SetTextColor(hdcBuffer, RGB(0, 255, 0));
-			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("已激活")));
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
-		TextOut(hdcBuffer, 950, 150, szDist, wsprintf(szDist, _T("有概率使得激光失去效果，"), m_gameStatus.totalDist));
-		TextOut(hdcBuffer, 950, 165, szDist, wsprintf(szDist, _T("失去效果的激光可以直接穿过。"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 150, szDist, wsprintf(szDist, _T("有概率使得激光失去效果，")));
+		TextOut(hdcBuffer, 950, 165, szDist, wsprintf(szDist, _T("失去效果的激光可以直接穿过。")));
 
-		TextOut(hdcBuffer, 950, 225, szDist, wsprintf(szDist, _T("蚁人(A)："), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 225, szDist, wsprintf(szDist, _T("蚁人(A)：")));
 		if (!AntMan)
 		{
 			SetTextColor(hdcBuffer, RGB(255, 0, 0));
-			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("未激活")));
 		}
 		else
 		{
 			SetTextColor(hdcBuffer, RGB(0, 255, 0));
-			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("已激活")));
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
-		TextOut(hdcBuffer, 950, 255, szDist, wsprintf(szDist, _T("召唤蚁人小伙伴入侵导弹，"), m_gameStatus.totalDist));
-		TextOut(hdcBuffer, 950, 270, szDist, wsprintf(szDist, _T("损坏的导弹飞行速度降低。"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 255, szDist, wsprintf(szDist, _T("召唤蚁人小伙伴入侵导弹，")));
+		TextOut(hdcBuffer, 950, 270, szDist, wsprintf(szDist, _T("损坏的导弹飞行速度降低。")));
 
-		TextOut(hdcBuffer, 950, 330, szDist, wsprintf(szDist, _T("灵魂之戒(S)："), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 330, szDist, wsprintf(szDist, _T("灵魂之戒(S)：")));
 		if (!SoulRing)
 		{
 			SetTextColor(hdcBuffer, RGB(255, 0, 0));
-			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("未激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("未激活")));
 		}
 		else
 		{
 			SetTextColor(hdcBuffer, RGB(0, 255, 0));
-			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("已激活"), m_gameStatus.totalDist));
+			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("已激活")));
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
-		TextOut(hdcBuffer, 950, 360, szDist, wsprintf(szDist, _T("游戏开始时减少一点生命值，"), m_gameStatus.totalDist));
-		TextOut(hdcBuffer, 950, 375, szDist, wsprintf(szDist, _T("但是无敌时间增加一倍。"), m_gameStatus.totalDist));
+		TextOut(hdcBuffer, 950, 360, szDist, wsprintf(szDist, _T("游戏开始时减少一点生命值，")));
+		TextOut(hdcBuffer, 950, 375, szDist, wsprintf(szDist, _T("但是无敌时间增加一倍。")));
 
-		TextOut(hdcBuffer, 1110, 430, szDist, wsprintf(szDist, _T("Press B to return back"), m_gameStatus.totalDist));
+		if (!GameStart) TextOut(hdcBuffer, 1110, 430, szDist, wsprintf(szDist, _T("Press B to return back")));
 	}
 	//最后将所有的信息绘制到屏幕上
 	BitBlt(hdc, 0, 0, WNDWIDTH, WNDHEIGHT, hdcBuffer, 0, 0, SRCCOPY);
@@ -741,7 +759,9 @@ VOID Render(HWND hWnd)
 		SetTimer(hWnd, ENDING_ID, ENDING_ELAPSE, NULL);
 		Sleep(1500);
 		ScoreBoard = TRUE;
+		AppStore = TRUE;
 		CharacterCount = -1;
+		m_others[0] = CreateOthers(WNDWIDTH - 425, 0, 425, 460, m_hOthersBmp[0]);
 	}
 }
 
@@ -846,8 +866,9 @@ GameStatus CreateGameStatus(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMA
 	gameStatus.size.cx = sizeX;
 	gameStatus.size.cy = sizeY;
 	gameStatus.hBmp = hBmp;
-	gameStatus.totalDist = 0;
+	gameStatus.totalDist = 0.0;
 	gameStatus.totalCoin = 0;
+	gameStatus.currentCoin = 0;
 	gameStatus.isPaused = false;
 	return gameStatus;
 }
@@ -896,7 +917,7 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					m_hero.invincible = 100;
+					m_hero.invincible = 100 * (1 + SoulRing);
 					for (int i = 0; i < MAX_LASER_NUM; i++)
 					{
 						m_laser[i].blink = FALSE;
@@ -905,13 +926,13 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				m_missile.active = FALSE;
 			}
 			ElapseCount++;
-			if (ElapseCount % 375 == 0)
+			if (ElapseCount % 100 == 0)
 			{
-				ScorePerFrame++;
+				ScorePerFrame += 0.25;
 				if (LaserRandom >= 9) LaserRandom -= 3;
 				if (MissileRandom >= 90) MissileRandom -= 30;
 			}
-			if (ElapseCount % 1125 == 0)
+			if (ElapseCount % 1200 == 0)
 			{
 				Gravity++;
 			}
@@ -927,14 +948,14 @@ VOID CoinUpdate()
 {
 	for (int k = 0; k < 10; k++)
 	{
-		CoinPosition[k][0] -= ScorePerFrame * 4;
+		CoinPosition[k][0] -= (int)(ScorePerFrame * 4 + 0.5);
 		if (CoinPosition[k][0] + COIN_SIZE * 5 < 0)
 		{
 			int prev = k - 1;
 			if (prev == -1) prev = 9;
 			CoinPosition[k][0] = CoinPosition[prev][0] + GetRandomInt(WNDWIDTH / 3, WNDWIDTH);
 			CoinPosition[k][1] = GetRandomInt(0, WNDHEIGHT - COIN_SIZE * 8);
-			Transform(k, GetRandomInt(0, 25));
+			Transform(k, GetRandomInt(0, 25), LuckyCoin);
 		}
 	}
 }
@@ -945,7 +966,7 @@ VOID LaserUpdate()
 	for (int i = 0; i < MAX_LASER_NUM; i++)
 		if (m_laser[i].used)
 		{
-			m_laser[i].pos.x -= ScorePerFrame * 4;
+			m_laser[i].pos.x -= (int)(ScorePerFrame * 4 + 0.5);
 		}
 
 	if (!LaserGenerate)
@@ -968,7 +989,9 @@ VOID LaserUpdate()
 				if (LaserAxis == MAX_LASER_NUM) LaserAxis = 0;
 				int length = GetRandomInt(WNDHEIGHT / 5, WNDHEIGHT / 5 * 3);
 				int position = GetRandomInt(0, WNDHEIGHT - length - 60);
-				m_laser[LaserAxis] = CreateLaser(WNDWIDTH, position, 39, 43, 18, 1, length, !m_hero.invincible);
+				int destroy = GetRandomInt(0, 4);
+				BOOL brlink = !(m_hero.invincible | (LaserInterference && destroy == 0));
+				m_laser[LaserAxis] = CreateLaser(WNDWIDTH, position, 39, 43, 18, 1, length, brlink);
 				LaserGenerate = 200;
 			}
 		}
@@ -994,7 +1017,7 @@ VOID MissileUpdate()
 		}
 		else
 		{
-			m_missile.pos.x -= ScorePerFrame * 12;
+			m_missile.pos.x -= (int)(ScorePerFrame * 12 + 0.5) / (1 + AntMan);
 			if (m_missile.pos.x + 167 < 0) m_missile.active = false;
 		}
 	}
@@ -1065,7 +1088,7 @@ VOID BackgroundUpdate()
 	int k;
 	for(k = 0; k < MAX_BACKGROUND_NUM; k++)
 	{
-		m_background[k].pos.x -= ScorePerFrame * 4;
+		m_background[k].pos.x -= (int)(ScorePerFrame * 4 + 0.5);
 		if (m_background[k].pos.x + m_background[k].size.cx < 0)
 		{
 			m_background[k].pos.x += MAX_BACKGROUND_NUM * BACKGROUND_SIZE_X;
@@ -1074,7 +1097,7 @@ VOID BackgroundUpdate()
 			m_background[k].hBmp = m_hBackgroundBmp[randk];
 		}
 	}
-	m_others[2].pos.x -= ScorePerFrame * 4;
+	m_others[2].pos.x -= (int)(ScorePerFrame * 4 + 0.5);
 }
 VOID TerrianUpdate()
 {
@@ -1093,9 +1116,9 @@ VOID GameStatusUpdate()
 {
 	//TODO
 	m_gameStatus.totalDist += ScorePerFrame;
-	LaserGenerate -= ScorePerFrame * 4;
+	LaserGenerate -= (int)(ScorePerFrame * 4 + 0.5);
 	if (LaserGenerate < 0) LaserGenerate = 0;
-	MissileGenerate -= ScorePerFrame * 4;
+	MissileGenerate -= (int)(ScorePerFrame * 4 + 0.5);
 	if (MissileGenerate < 0) MissileGenerate = 0;
 }
 
@@ -1141,16 +1164,18 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	case 'R':
 		if (m_hero.alive) break;
 		GameStatusInitialize();
-		GameParameterInitialize();
+		GameParameterInitialize(LuckyCoin, SoulRing);
 
 		GameStart = TRUE;
 		IsOnFire = FALSE;
 		ScoreBoard = FALSE;
+		AppStore = FALSE;
 		HeroVelocity = 0;
-		ScorePerFrame = 4;
+		ScorePerFrame = 4.0;
 		SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
 		//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 		KillTimer(hWnd, ENDING_ID);
+		m_others[0] = CreateOthers(WNDWIDTH, WNDHEIGHT, 425, 460, m_hOthersBmp[0]);
 		m_others[2] = CreateOthers(WNDWIDTH / 4, WNDHEIGHT - 160, 115 * 0.62, 108 * 0.62, m_hOthersBmp[2]);
 		Gravity = 2;
 		ElapseCount = 0;
@@ -1182,19 +1207,19 @@ VOID KeyDown2(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 		case 'C':
-			LuckyCoin = ~LuckyCoin;
+			LuckyCoin = !LuckyCoin;
 			break;
 		case 'E':
-			LaserInterference = ~LaserInterference;
+			LaserInterference = !LaserInterference;
 			break;
 		case 'A':
-			AntMan = ~AntMan;
+			AntMan = !AntMan;
 			break;
 		case 'S':
-			SoulRing = ~SoulRing;
+			SoulRing = !SoulRing;
 			break;
 		case 'B':
-			AppStore = FALSE;
+			if (!GameStart) AppStore = FALSE;
 			break;
 	}
 	InvalidateRect(hWnd, NULL, FALSE);
@@ -1273,7 +1298,7 @@ VOID LButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		}
 		if (!AppStore && MouseInButton(ptMouse, m_button[0]))
 		{
-			GameParameterInitialize();
+			GameParameterInitialize(LuckyCoin, SoulRing);
 			//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 			GameStart = TRUE;
 		}
