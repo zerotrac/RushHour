@@ -44,7 +44,7 @@
 #define GAME_STATUS_SIZE_Y   30
 #define BUTTON_SIZE_X        406
 #define BUTTON_SIZE_Y        119
-#define HERO_TO_GROUND       120
+#define HERO_TO_GROUND       128
 
 #define HERO_MAX_FRAME       HERO_MAX_FRAME_NUM * HERO_MAX_FRAME_UP * HERO_MAX_FRAME_DOWN
 #define LASER_MAX_FRAME      16
@@ -155,9 +155,9 @@ HBITMAP m_hBackgroundBmp[BACKGROUND_COLOR_NUM];
 HBITMAP	m_hBlockBmp[BLOCK_COLOR_NUM];
 HBITMAP	m_hRoofkBmp[ROOF_COLOR_NUM];
 HBITMAP m_hButtonBmp[BUTTON_NUM * 2];
-HBITMAP m_hOthersBmp[OTHERS_NUM + 2];
-HBITMAP m_hLaserBmp[3];
-HBITMAP m_hMissileBmp[3];
+HBITMAP m_hOthersBmp[OTHERS_NUM * 2];
+HBITMAP m_hLaserBmp[6];
+HBITMAP m_hMissileBmp[6];
 HBITMAP m_hScoreboardBmp;
 HBITMAP m_hShieldBmp;
 HBITMAP m_hLifeBmp;
@@ -189,8 +189,8 @@ Terrian       m_terrian[MAX_TERRIAN_NUM];
 Background    m_background[MAX_BACKGROUND_NUM];
 GameStatus    m_gameStatus;
 Button        m_button[BUTTON_NUM * 2];
-Others        m_others[OTHERS_NUM];
-Laser         m_laser[MAX_LASER_NUM];
+Others        m_others[OTHERS_NUM * 2];
+Laser         m_laser[MAX_LASER_NUM * 2];
 Missile       m_missile;
 
 /*全局函数*/
@@ -265,6 +265,7 @@ BOOL Paused(POINT);
 //键盘按下事件处理
 VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam);
 VOID KeyDown2(HWND hWnd, WPARAM wParam, LPARAM lParam);
+VOID KeyDown3(HWND hWnd, WPARAM wParam, LPARAM lParam);
 //键盘松开事件处理
 VOID KeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam);
 //左鼠标点击事件

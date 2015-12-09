@@ -11,6 +11,7 @@ BOOL LeftKeyDown = FALSE;
 BOOL IsOnFire = FALSE;
 BOOL ScoreBoard = FALSE;
 BOOL AppStore = FALSE;
+BOOL SelectMode = FALSE;
 
 BOOL LuckyCoin = FALSE;
 BOOL LaserInterference = FALSE;
@@ -21,6 +22,7 @@ int HeroVelocity = 0;
 double ScorePerFrame = 4.0;
 int CharacterCount = -1;
 int ElapseCount = 0;
+int GameMode = 1;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -109,6 +111,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//键盘按下事件
 			if (GameStart) KeyDown(hWnd, wParam, lParam);
 			if (AppStore) KeyDown2(hWnd, wParam, lParam);
+			if (SelectMode) KeyDown3(hWnd, wParam, lParam);
 			break;
 		case WM_KEYUP:
 			//键盘松开事件
@@ -388,7 +391,7 @@ VOID Render(HWND hWnd)
 			);
 		}
 	}
-	if (!AppStore)
+	if (!AppStore && !SelectMode)
 	{
 		for (k = 0; k < BUTTON_NUM * 2; k++)
 		{
@@ -743,6 +746,75 @@ VOID Render(HWND hWnd)
 
 		if (!GameStart) TextOut(hdcBuffer, 1110, 430, szDist, wsprintf(szDist, _T("Press B to return back")));
 	}
+
+	if (SelectMode)
+	{
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 15, szDist, wsprintf(szDist, _T("火箭飞人模式(Jetpack Joyride)(J): ")));
+		if (GameMode != 1)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("未激活")));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 15, szDist, wsprintf(szDist, _T("已激活")));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 45, szDist, wsprintf(szDist, _T("按住↑键使人物飞行。")));
+		//TextOut(hdcBuffer, 950, 60, szDist, wsprintf(szDist, _T("松开↑键使人物下落。")));
+
+		TextOut(hdcBuffer, 950, 120, szDist, wsprintf(szDist, _T("重力小子模式(Gravity Guy)(G)：")));
+		if (GameMode != 2)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("未激活")));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 120, szDist, wsprintf(szDist, _T("已激活")));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 150, szDist, wsprintf(szDist, _T("使用↑键改变重力方向。")));
+		//TextOut(hdcBuffer, 950, 165, szDist, wsprintf(szDist, _T("失去效果的激光可以直接穿过。")));
+
+		TextOut(hdcBuffer, 950, 225, szDist, wsprintf(szDist, _T("利物鸟模式(Profit Bird)(P)：")));
+		if (GameMode != 3)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("未激活")));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 225, szDist, wsprintf(szDist, _T("已激活")));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 255, szDist, wsprintf(szDist, _T("使用↑键使人物飞行。")));
+		//TextOut(hdcBuffer, 950, 270, szDist, wsprintf(szDist, _T("损坏的导弹飞行速度降低。")));
+
+		TextOut(hdcBuffer, 950, 330, szDist, wsprintf(szDist, _T("传送器模式(Freaking Teleporter)(T)：")));
+		if (GameMode != 4)
+		{
+			SetTextColor(hdcBuffer, RGB(255, 0, 0));
+			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("未激活")));
+		}
+		else
+		{
+			SetTextColor(hdcBuffer, RGB(0, 255, 0));
+			TextOut(hdcBuffer, 1200, 330, szDist, wsprintf(szDist, _T("已激活")));
+		}
+		SetTextColor(hdcBuffer, RGB(255, 255, 255));
+		TextOut(hdcBuffer, 950, 360, szDist, wsprintf(szDist, _T("使用↑键使人物瞬间移动。")));
+		//TextOut(hdcBuffer, 950, 375, szDist, wsprintf(szDist, _T("但是无敌时间增加一倍。")));
+
+		if (!GameStart) TextOut(hdcBuffer, 1110, 430, szDist, wsprintf(szDist, _T("Press B to return back")));
+	}
+
+	//TextOut(hdcBuffer, 0, 200, szDist, wsprintf(szDist, _T("Invincible = %d"), m_hero.invincible));
+	//TextOut(hdcBuffer, 0, 250, szDist, wsprintf(szDist, _T("LaserAxis = %d"), LaserAxis));
 	//最后将所有的信息绘制到屏幕上
 	BitBlt(hdc, 0, 0, WNDWIDTH, WNDHEIGHT, hdcBuffer, 0, 0, SRCCOPY);
 
@@ -1221,7 +1293,36 @@ VOID KeyDown2(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			SoulRing = !SoulRing;
 			break;
 		case 'B':
-			if (!GameStart) AppStore = FALSE;
+			if (!GameStart)
+			{
+				AppStore = FALSE;
+			}
+			break;
+	}
+	InvalidateRect(hWnd, NULL, FALSE);
+}
+
+VOID KeyDown3(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+	switch (wParam)
+	{
+		case 'J':
+			GameMode = 1;
+			break;
+		case 'G':
+			GameMode = 2;
+			break;
+		case 'P':
+			GameMode = 3;
+			break;
+		case 'T':
+			GameMode = 4;
+			break;
+		case 'B':
+			if (!GameStart)
+			{
+				SelectMode = FALSE;
+			}
 			break;
 	}
 	InvalidateRect(hWnd, NULL, FALSE);
@@ -1298,15 +1399,19 @@ VOID LButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			m_button[i].size.cx = m_button[i + 1].size.cx = 320;
 			m_button[i].size.cy = m_button[i + 1].size.cy = 90;
 		}
-		if (!AppStore && MouseInButton(ptMouse, m_button[0]))
+		if (!AppStore && !SelectMode && MouseInButton(ptMouse, m_button[0]))
 		{
 			GameParameterInitialize(LuckyCoin, SoulRing);
 			//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 			GameStart = TRUE;
 		}
-		if (MouseInButton(ptMouse, m_button[4]))
+		else if (!AppStore && !SelectMode && MouseInButton(ptMouse, m_button[4]))
 		{
 			AppStore = TRUE;
+		}
+		else if (!AppStore && !SelectMode && MouseInButton(ptMouse, m_button[2]))
+		{
+			SelectMode = TRUE;
 		}
 	}
 	InvalidateRect(hWnd, NULL, FALSE);

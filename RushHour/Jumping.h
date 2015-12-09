@@ -114,7 +114,7 @@ BOOL CheckCollision()
 										 m_missile.pos.x + m_missile.size.cx, m_missile.pos.y + m_missile.size.cy, 0);
 	}
 
-	for (int i = 0; i < 30; i++)
+	for (int i = 0; i < MAX_LASER_NUM; i++)
 	{
 		if (m_laser[i].active && m_laser[i].blink)
 		{
@@ -179,20 +179,18 @@ VOID GameParameterInitialize(BOOL LuckyCoin, BOOL SoulRing)
 	for (int k = 0; k < MAX_LASER_NUM; k++)
 	{
 		m_laser[k].active = FALSE;
+		m_laser[k].blink = FALSE;
+		m_laser[k].used = FALSE;
 	}
 	m_missile = CreateMissile(0, 0, 0, 0, FALSE, 0);
 
 	LaserGenerate = WNDWIDTH * 2;
-	LaserAxis = -1;
+	LaserAxis = 0;
 	LaserCurrentFrame = 0;
 	LaserRandom = 30;
 	MissileGenerate = WNDWIDTH;
 	MissileRandom = 300;
 	CoinPerLife = 100;
-	for (int i = 0; i < MAX_LASER_NUM; i++)
-	{
-		m_laser[i].used = FALSE;
-	}
 	m_button[0].active = TRUE;
 	m_button[1].active = FALSE;
 	m_gameStatus = CreateGameStatus(WNDWIDTH - GAME_STATUS_SIZE_X - 10, 0, GAME_STATUS_SIZE_X, GAME_STATUS_SIZE_Y, m_hGameStatusBmp);
