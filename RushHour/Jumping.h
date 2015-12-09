@@ -58,6 +58,11 @@ int GetRandomInt(int RangeL, int RangeR)
 
 void Transform(int label, int num, BOOL LuckyCoin)
 {
+	if (num < 0)
+	{
+		memset(AlphaCoin[label], 0, sizeof(AlphaCoin[label]));
+		return;
+	}
 	int BinaryLine[8];
 	for (int i = 0; i < 5; i++)
 	{

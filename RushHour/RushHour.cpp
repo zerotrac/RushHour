@@ -14,6 +14,7 @@ BOOL AppStore = FALSE;
 BOOL SelectMode = FALSE;
 BOOL NextOperationValid = TRUE;
 BOOL DoOperation = FALSE;
+BOOL AntiGravity = FALSE;
 
 BOOL LuckyCoin = FALSE;
 BOOL LaserInterference = FALSE;
@@ -157,7 +158,9 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	//加载英雄位图
 	m_hHeroBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERO));
 	m_hHeroMistBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROMIST));
+	m_hHeroInvBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROINV));
 	m_hShieldBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_SHIELD));
+	m_hShieldInvBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_SHIELDINV));
 	m_hCoinBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COIN));
 	m_coin = CreateCoin(100, 100, COIN_SIZE, COIN_SIZE, m_hCoinBmp);
 	m_hLuckyBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COINB));;
@@ -189,11 +192,6 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		m_hBackgroundBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_backgroundBmpNames[k]));
 	}
-	/*for (k = 0; k < MAX_BACKGROUND_NUM; k++)
-	{
-		int randk = 0;
-		m_background[k] = CreateBackground(BACKGROUND_SIZE_X * k, 0, BACKGROUND_SIZE_X, BACKGROUND_SIZE_Y, m_hBackgroundBmp[randk]);
-	}*/
 
 	//加载按钮位图
 	m_hOthersBmp[0] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[0]));
@@ -216,19 +214,7 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		m_hOthersBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[k]));
 	}
-	//创建英雄、建筑
-	
-	//m_building = CreateBuilding(0, 70, BUILDING_SIZE_X, BUILDING_SIZE_Y, m_hBuildingBmp);
-	//创建背景
-	
-	//创建地形
-	/*for (k = 0; k < MAX_TERRIAN_NUM; k++)
-	{
-		if (k % 4 == 0) continue;
-		m_terrian[k] = CreateTerrian(k * 65, 100 + 50 * (k % 2), BLOCK_SIZE_X, 300, m_hBlockBmp[k % 4], m_hRoofkBmp[k % 2], ROOF_SIZE_Y, BLOCK_SIZE_Y);
-	}*/
 	//创建游戏状态
-	
 	//启动计时器
 	SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
 	//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
@@ -411,13 +397,14 @@ VOID Render(HWND hWnd)
 	//绘制Hero到缓存
 	if (m_hero.alive)
 	{
-		SelectObject(hdcBmp, m_hero.hBmp);
 		int HeroBitLabel;
 		if (m_hero.Status == 0) HeroBitLabel = m_hero.curFrameIndex % HERO_MAX_FRAME_NUM;
-		if (m_hero.Status == 1 || GameMode == 4) HeroBitLabel = HERO_MAX_FRAME_NUM + m_hero.curFrameIndex % HERO_MAX_FRAME_UP;
+		if (m_hero.Status == 1 || GameMode == 3 || GameMode == 4) HeroBitLabel = HERO_MAX_FRAME_NUM + m_hero.curFrameIndex % HERO_MAX_FRAME_UP;
 		if (m_hero.Status == 2) HeroBitLabel = HERO_MAX_FRAME_NUM + HERO_MAX_FRAME_UP + m_hero.curFrameIndex % HERO_MAX_FRAME_DOWN;
+		if (GameMode == 2 && AntiGravity) HeroBitLabel = HERO_MAX_FRAME_NUM + HERO_MAX_FRAME_UP + HERO_MAX_FRAME_DOWN - 1 - HeroBitLabel;
 		if (GameMode == 4 && DoOperation)
 		{
+			SelectObject(hdcBmp, m_hero.hBmp);
 			if (MachineCountdown >= 5)
 			{
 				TransparentBlt(
@@ -439,8 +426,19 @@ VOID Render(HWND hWnd)
 				);
 			}
 		}
+		else if (GameMode == 2 && AntiGravity)
+		{
+			SelectObject(hdcBmp, m_hHeroInvBmp);
+			TransparentBlt(
+				hdcBuffer, m_hero.pos.x, m_hero.pos.y,
+				m_hero.size.cx, m_hero.size.cy,
+				hdcBmp, 0, m_hero.size.cy * HeroBitLabel, m_hero.size.cx, m_hero.size.cy,
+				RGB(255, 255, 255)
+			);
+		}
 		else
 		{
+			SelectObject(hdcBmp, m_hero.hBmp);
 			TransparentBlt(
 				hdcBuffer, m_hero.pos.x, m_hero.pos.y,
 				m_hero.size.cx, m_hero.size.cy,
@@ -450,11 +448,22 @@ VOID Render(HWND hWnd)
 		}
 		if (m_hero.invincible)
 		{
-			SelectObject(hdcBmp, m_hShieldBmp);
-			TransparentBlt(
-				hdcBuffer, m_hero.pos.x + HERO_SIZE_X - 9, m_hero.pos.y - 28,
-				137 * 0.18, 543 * 0.18, hdcBmp, 0, 0, 137, 543, RGB(0, 0, 0)
-			);
+			if (GameMode == 2 && AntiGravity)
+			{
+				SelectObject(hdcBmp, m_hShieldInvBmp);
+				TransparentBlt(
+					hdcBuffer, m_hero.pos.x + HERO_SIZE_X - 9, m_hero.pos.y - 10,
+					137 * 0.18, 543 * 0.18, hdcBmp, 0, 0, 137, 543, RGB(0, 0, 0)
+				);
+			}
+			else
+			{
+				SelectObject(hdcBmp, m_hShieldBmp);
+				TransparentBlt(
+					hdcBuffer, m_hero.pos.x + HERO_SIZE_X - 9, m_hero.pos.y - 28,
+					137 * 0.18, 543 * 0.18, hdcBmp, 0, 0, 137, 543, RGB(0, 0, 0)
+				);
+			}
 		}
 		if (GameMode == 4 && GameStart && !DoOperation)
 		{
@@ -672,11 +681,12 @@ VOID Render(HWND hWnd)
 	SetTextColor(hdcBuffer, RGB(0, 0, 0));
 	SetBkMode(hdcBuffer, TRANSPARENT);
 
-	TextOut(hdcBuffer, 0, WNDHEIGHT / 2, szDist, wsprintf(szDist, _T("Dist = %d"), (int)(ScorePerFrame * 4 * 5)));
+	//TextOut(hdcBuffer, 0, WNDHEIGHT / 2, szDist, wsprintf(szDist, _T("Status = %d"), m_hero.Status));
+	/*TextOut(hdcBuffer, 0, WNDHEIGHT / 2, szDist, wsprintf(szDist, _T("Dist = %d"), (int)(ScorePerFrame * 4 * 5)));
 	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 50, szDist, wsprintf(szDist, _T("MCount = %d"), HeroPosition[MachineCount]));
 	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 100, szDist, wsprintf(szDist, _T("MRecord = %d"), MachineRecord));
 	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 150, szDist, wsprintf(szDist, _T("HPosY = %d"), m_hero.pos.y));
-	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 200, szDist, wsprintf(szDist, _T("MCountDown = %d"), MachineCountdown));
+	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 200, szDist, wsprintf(szDist, _T("MCountDown = %d"), MachineCountdown));*/
 
 	if (GameStart)
 	{
@@ -721,8 +731,7 @@ VOID Render(HWND hWnd)
 			);
 		}
 	}
-	//TextOut(hdcBuffer, 0, 200, szDist, wsprintf(szDist, _T("LuckyCoin = %d: "), LuckyCoin));
-
+	
 	if (AppStore)
 	{
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
@@ -805,7 +814,6 @@ VOID Render(HWND hWnd)
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
 		TextOut(hdcBuffer, 950, 45, szDist, wsprintf(szDist, _T("按住↑键使人物飞行。")));
-		//TextOut(hdcBuffer, 950, 60, szDist, wsprintf(szDist, _T("松开↑键使人物下落。")));
 
 		TextOut(hdcBuffer, 950, 120, szDist, wsprintf(szDist, _T("重力小子模式(Gravity Guy)(G)：")));
 		if (GameMode != 2)
@@ -820,7 +828,6 @@ VOID Render(HWND hWnd)
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
 		TextOut(hdcBuffer, 950, 150, szDist, wsprintf(szDist, _T("使用↑键改变重力方向。")));
-		//TextOut(hdcBuffer, 950, 165, szDist, wsprintf(szDist, _T("失去效果的激光可以直接穿过。")));
 
 		TextOut(hdcBuffer, 950, 225, szDist, wsprintf(szDist, _T("利物鸟模式(Profit Bird)(P)：")));
 		if (GameMode != 3)
@@ -835,7 +842,6 @@ VOID Render(HWND hWnd)
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
 		TextOut(hdcBuffer, 950, 255, szDist, wsprintf(szDist, _T("使用↑键使人物飞行。")));
-		//TextOut(hdcBuffer, 950, 270, szDist, wsprintf(szDist, _T("损坏的导弹飞行速度降低。")));
 
 		TextOut(hdcBuffer, 950, 330, szDist, wsprintf(szDist, _T("传送器模式(Freaking Teleporter)(T)：")));
 		if (GameMode != 4)
@@ -850,13 +856,10 @@ VOID Render(HWND hWnd)
 		}
 		SetTextColor(hdcBuffer, RGB(255, 255, 255));
 		TextOut(hdcBuffer, 950, 360, szDist, wsprintf(szDist, _T("使用↑键使人物瞬间移动。")));
-		//TextOut(hdcBuffer, 950, 375, szDist, wsprintf(szDist, _T("但是无敌时间增加一倍。")));
 
 		if (!GameStart) TextOut(hdcBuffer, 1110, 430, szDist, wsprintf(szDist, _T("Press B to return back")));
 	}
 
-	//TextOut(hdcBuffer, 0, 200, szDist, wsprintf(szDist, _T("Invincible = %d"), m_hero.invincible));
-	//TextOut(hdcBuffer, 0, 250, szDist, wsprintf(szDist, _T("LaserAxis = %d"), LaserAxis));
 	//最后将所有的信息绘制到屏幕上
 	BitBlt(hdc, 0, 0, WNDWIDTH, WNDHEIGHT, hdcBuffer, 0, 0, SRCCOPY);
 
@@ -893,7 +896,7 @@ Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int 
 	hero.Status = Status;
 	hero.maxFrameSize = maxFrameSize;
 	hero.invincible = 0;
-	hero.life = 1;
+	hero.life = 3;
 	hero.alive = TRUE;
 	return hero;
 }
@@ -1029,6 +1032,7 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				{
 					m_hero.alive = FALSE;
 					IsOnFire = FALSE;
+					AntiGravity = FALSE;
 					//KillTimer(hWnd, TIMER_ID);
 					//KillTimer(hWnd, SCORE_ID);
 				}
@@ -1167,8 +1171,6 @@ VOID HeroUpdate()
 {
 	//TODO
 	//更新位置
-	//m_hero.pos.x += 1;
-	//m_hero.pos.x = m_hero.pos.x >= WNDWIDTH ? 0 : m_hero.pos.x;
 	//更新动作
 	double HeroAcceleration = 0;
 	if (!m_hero.alive)
@@ -1193,33 +1195,53 @@ VOID HeroUpdate()
 				m_hero.Status = 2;
 			}
 		}
-		else
+		if (GameMode == 2)
 		{
-			if (GameMode == 2)
+			if (DoOperation)
 			{
-
+				DoOperation = FALSE;
 			}
-			if (GameMode == 3)
+			if (AntiGravity)
 			{
-				
+				HeroAcceleration = 1.0 * (-Gravity);
+				if (HeroVelocity > 0) HeroAcceleration = -2.0 * Gravity;
 			}
-			if (GameMode == 4 && DoOperation)
+			else
 			{
-				MachineCountdown--;
-				if (MachineCountdown == 4) m_hero.pos.y = MachineRecord;
-				if (MachineCountdown == 0) DoOperation = FALSE;
+				HeroAcceleration = 1.0 * Gravity;
+				if (HeroVelocity < 0) HeroAcceleration = 2.0 * Gravity;
 			}
+			m_hero.Status = 2;
+		}
+		if (GameMode == 3)
+		{
+			if (DoOperation)
+			{
+				HeroAcceleration = -12.0 * Gravity;
+				DoOperation = FALSE;
+			}
+			else
+			{
+				HeroAcceleration = 1.0 * Gravity;
+			}
+		}
+		if (GameMode == 4 && DoOperation)
+		{
+			MachineCountdown--;
+			if (MachineCountdown == 4) m_hero.pos.y = MachineRecord;
+			if (MachineCountdown == 0) DoOperation = FALSE;
 		}
 	}
 	double HeroDisplacement = 1.0 * HeroVelocity + 0.5 * HeroAcceleration;
 	HeroVelocity += (int)HeroAcceleration;
 	int HeroPosY = m_hero.pos.y + (int)HeroDisplacement;
-	if (HeroPosY < 0)
+	if (HeroPosY <= 0)
 	{
 		HeroPosY = 0;
 		HeroVelocity = 0;
+		if (AntiGravity && GameMode == 2) m_hero.Status = 0;
 	}
-	else if (HeroPosY > WNDHEIGHT - HERO_TO_GROUND)
+	else if (HeroPosY >= WNDHEIGHT - HERO_TO_GROUND)
 	{
 		HeroPosY = WNDHEIGHT - HERO_TO_GROUND;
 		HeroVelocity = 0;
@@ -1233,7 +1255,6 @@ VOID HeroUpdate()
 	++MachineCount;
 	if (MachineCount == 66) MachineCount = 0;
 }
-
 VOID BackgroundUpdate()
 {
 	int k;
@@ -1310,11 +1331,20 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		}
 		if (GameMode == 2)
 		{
-
+			if (NextOperationValid && !DoOperation)
+			{
+				DoOperation = TRUE;
+				NextOperationValid = FALSE;
+				AntiGravity = ~AntiGravity;
+			}
 		}
 		if (GameMode == 3)
 		{
-
+			if (NextOperationValid && !DoOperation)
+			{
+				DoOperation = TRUE;
+				NextOperationValid = FALSE;
+			}
 		}
 		if (GameMode == 4)
 		{
@@ -1433,18 +1463,17 @@ VOID KeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 	case VK_UP:
-		//m_hero.pos.y += 50;
 		if (GameMode == 1)
 		{
 			IsOnFire = false;
 		}
 		if (GameMode == 2)
 		{
-
+			NextOperationValid = TRUE;
 		}
 		if (GameMode == 3)
 		{
-
+			NextOperationValid = TRUE;
 		}
 		if (GameMode == 4)
 		{

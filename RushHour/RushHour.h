@@ -144,7 +144,7 @@ static TCHAR szTitle[] = _T("Jetpack Mouseride");
 /*ÉùÃ÷Î»Í¼¾ä±ú*/
 
 HBITMAP m_hBuildingBmp;
-HBITMAP m_hHeroBmp, m_hHeroMistBmp;
+HBITMAP m_hHeroBmp, m_hHeroMistBmp, m_hHeroInvBmp;
 HBITMAP m_hHeroDieBmp[2];
 HBITMAP m_hCoinBmp;
 HBITMAP m_hLuckyBmp;
@@ -157,7 +157,7 @@ HBITMAP m_hOthersBmp[OTHERS_NUM * 2];
 HBITMAP m_hLaserBmp[6];
 HBITMAP m_hMissileBmp[6];
 HBITMAP m_hScoreboardBmp;
-HBITMAP m_hShieldBmp;
+HBITMAP m_hShieldBmp, m_hShieldInvBmp;
 HBITMAP m_hLifeBmp;
 HBITMAP m_hNumberBmp[10];
 HBITMAP m_hSmallNumberBmp[10];
