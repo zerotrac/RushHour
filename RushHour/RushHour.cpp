@@ -12,6 +12,8 @@ BOOL IsOnFire = FALSE;
 BOOL ScoreBoard = FALSE;
 BOOL AppStore = FALSE;
 BOOL SelectMode = FALSE;
+BOOL NextOperationValid = TRUE;
+BOOL DoOperation = FALSE;
 
 BOOL LuckyCoin = FALSE;
 BOOL LaserInterference = FALSE;
@@ -23,6 +25,9 @@ double ScorePerFrame = 4.0;
 int CharacterCount = -1;
 int ElapseCount = 0;
 int GameMode = 1;
+int MachineCount = 0;
+int MachineCountdown = 0;
+int MachineRecord = 0;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -151,20 +156,14 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 	//加载英雄位图
 	m_hHeroBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERO));
+	m_hHeroMistBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROMIST));
 	m_hShieldBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_SHIELD));
-	//m_hHeroUpBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROUP));
-	//m_hHeroDownBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERODOWN));
-	//m_hero = CreateHero(WNDWIDTH / 4, WNDHEIGHT - HERO_TO_GROUND, HERO_SIZE_X, HERO_SIZE_Y, m_hHeroBmp, 0, 0, HERO_MAX_FRAME_NUM);
 	m_hCoinBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COIN));
 	m_coin = CreateCoin(100, 100, COIN_SIZE, COIN_SIZE, m_hCoinBmp);
 	m_hLuckyBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COINB));;
 	m_hLifeBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_LIFE));
-	//m_laser = CreateLaser(100, 100, 39, 43, 18, 1, 200);
-	//加载游戏状态位图
 	m_hGameStatusBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_GAME_STATUS));
-	//m_gameStatus = CreateGameStatus(10, 8, GAME_STATUS_SIZE_X, GAME_STATUS_SIZE_Y, m_hGameStatusBmp);
 	m_hScoreboardBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_SCOREBOARD));
-	//m_missile = CreateMissile(0, 0, 0, 0, FALSE, 0);
 	
 	for (int k = 0; k < 10; k++)
 	{
@@ -297,7 +296,7 @@ VOID Render(HWND hWnd)
 			}
 	}
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < MAX_LASER_NUM; i++)
 	{
 		if (m_laser[i].used)
 		{
@@ -415,14 +414,40 @@ VOID Render(HWND hWnd)
 		SelectObject(hdcBmp, m_hero.hBmp);
 		int HeroBitLabel;
 		if (m_hero.Status == 0) HeroBitLabel = m_hero.curFrameIndex % HERO_MAX_FRAME_NUM;
-		if (m_hero.Status == 1) HeroBitLabel = HERO_MAX_FRAME_NUM + m_hero.curFrameIndex % HERO_MAX_FRAME_UP;
+		if (m_hero.Status == 1 || GameMode == 4) HeroBitLabel = HERO_MAX_FRAME_NUM + m_hero.curFrameIndex % HERO_MAX_FRAME_UP;
 		if (m_hero.Status == 2) HeroBitLabel = HERO_MAX_FRAME_NUM + HERO_MAX_FRAME_UP + m_hero.curFrameIndex % HERO_MAX_FRAME_DOWN;
-		TransparentBlt(
-			hdcBuffer, m_hero.pos.x, m_hero.pos.y,
-			m_hero.size.cx, m_hero.size.cy,
-			hdcBmp, 0, m_hero.size.cy * HeroBitLabel, m_hero.size.cx, m_hero.size.cy,
-			RGB(255, 255, 255)
+		if (GameMode == 4 && DoOperation)
+		{
+			if (MachineCountdown >= 5)
+			{
+				TransparentBlt(
+					hdcBuffer, m_hero.pos.x, m_hero.pos.y + HERO_SIZE_Y * (10.0 - MachineCountdown) / 10,
+					m_hero.size.cx, m_hero.size.cy * (MachineCountdown - 5) / 5,
+					hdcBmp, 0, m_hero.size.cy * HeroBitLabel + HERO_SIZE_Y * (10.0 - MachineCountdown) / 10,
+					m_hero.size.cx, m_hero.size.cy - HERO_SIZE_Y * (10.0 - MachineCountdown) / 5,
+					RGB(255, 255, 255)
+				);
+			}
+			else
+			{
+				TransparentBlt(
+					hdcBuffer, m_hero.pos.x, m_hero.pos.y + HERO_SIZE_Y * MachineCountdown / 10,
+					m_hero.size.cx, m_hero.size.cy * (5 - MachineCountdown) / 5,
+					hdcBmp, 0, m_hero.size.cy * HeroBitLabel + HERO_SIZE_Y * MachineCountdown / 10,
+					m_hero.size.cx, m_hero.size.cy - HERO_SIZE_Y * MachineCountdown / 5,
+					RGB(255, 255, 255)
+				);
+			}
+		}
+		else
+		{
+			TransparentBlt(
+				hdcBuffer, m_hero.pos.x, m_hero.pos.y,
+				m_hero.size.cx, m_hero.size.cy,
+				hdcBmp, 0, m_hero.size.cy * HeroBitLabel, m_hero.size.cx, m_hero.size.cy,
+				RGB(255, 255, 255)
 			);
+		}
 		if (m_hero.invincible)
 		{
 			SelectObject(hdcBmp, m_hShieldBmp);
@@ -430,6 +455,17 @@ VOID Render(HWND hWnd)
 				hdcBuffer, m_hero.pos.x + HERO_SIZE_X - 9, m_hero.pos.y - 28,
 				137 * 0.18, 543 * 0.18, hdcBmp, 0, 0, 137, 543, RGB(0, 0, 0)
 			);
+		}
+		if (GameMode == 4 && GameStart && !DoOperation)
+		{
+			SelectObject(hdcBmp, m_hHeroMistBmp);
+			HeroBitLabel = m_hero.curFrameIndex % HERO_MAX_FRAME_UP;
+			TransparentBlt(
+				hdcBuffer, m_hero.pos.x + ScorePerFrame * 4 * 5, HeroPosition[MachineCount],
+				m_hero.size.cx, m_hero.size.cy,
+				hdcBmp, 0, m_hero.size.cy * HeroBitLabel, m_hero.size.cx, m_hero.size.cy,
+				RGB(255, 255, 255)
+				);
 		}
 	}
 	else
@@ -635,6 +671,12 @@ VOID Render(HWND hWnd)
 	TCHAR szDist[100];
 	SetTextColor(hdcBuffer, RGB(0, 0, 0));
 	SetBkMode(hdcBuffer, TRANSPARENT);
+
+	TextOut(hdcBuffer, 0, WNDHEIGHT / 2, szDist, wsprintf(szDist, _T("Dist = %d"), (int)(ScorePerFrame * 4 * 5)));
+	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 50, szDist, wsprintf(szDist, _T("MCount = %d"), HeroPosition[MachineCount]));
+	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 100, szDist, wsprintf(szDist, _T("MRecord = %d"), MachineRecord));
+	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 150, szDist, wsprintf(szDist, _T("HPosY = %d"), m_hero.pos.y));
+	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 200, szDist, wsprintf(szDist, _T("MCountDown = %d"), MachineCountdown));
 
 	if (GameStart)
 	{
@@ -851,7 +893,7 @@ Hero CreateHero(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp, int 
 	hero.Status = Status;
 	hero.maxFrameSize = maxFrameSize;
 	hero.invincible = 0;
-	hero.life = 3;
+	hero.life = 1;
 	hero.alive = TRUE;
 	return hero;
 }
@@ -978,7 +1020,8 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			CoinUpdate();
 			MissileUpdate();
 			LaserUpdate();
-			BOOL judgecollision = CheckCollision();
+			BOOL judgecollision = FALSE;
+			if (!(GameMode == 4 && DoOperation && MachineCountdown >= 5)) judgecollision = CheckCollision();
 			if (judgecollision)
 			{
 				m_hero.life--;
@@ -1000,9 +1043,12 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				m_missile.active = FALSE;
 			}
 			ElapseCount++;
-			if (ElapseCount % 100 == 0)
+			if (ElapseCount % 1 == 0)
 			{
-				ScorePerFrame += 0.25;
+				ScorePerFrame += 0.0025;
+			}
+			if (ElapseCount % 400 == 0)
+			{
 				if (LaserRandom >= 9) LaserRandom -= 3;
 				if (MissileRandom >= 90) MissileRandom -= 30;
 			}
@@ -1097,7 +1143,7 @@ VOID MissileUpdate()
 	}
 	else if (!MissileGenerate && m_hero.alive)
 	{
-		int roll = GetRandomInt(0, LaserRandom);
+		int roll = GetRandomInt(0, MissileRandom);
 		if (roll == 0)
 		{
 			m_missile = CreateMissile(WNDWIDTH - 85, m_hero.pos.y + 3, 64, 56, TRUE, 50);
@@ -1124,18 +1170,46 @@ VOID HeroUpdate()
 	//m_hero.pos.x += 1;
 	//m_hero.pos.x = m_hero.pos.x >= WNDWIDTH ? 0 : m_hero.pos.x;
 	//更新动作
-	double HeroAcceleration;
-	if (IsOnFire)
-	{
-		HeroAcceleration = 1.0 * (-Gravity);
-		if (HeroVelocity > 0) HeroAcceleration = -2.0 * Gravity;
-		m_hero.Status = 1;
-	}
-	else
+	double HeroAcceleration = 0;
+	if (!m_hero.alive)
 	{
 		HeroAcceleration = 1.0 * Gravity;
 		if (HeroVelocity < 0) HeroAcceleration = 2.0 * Gravity;
-		m_hero.Status = 2;
+	}
+	else
+	{
+		if (GameMode == 1)
+		{
+			if (IsOnFire)
+			{
+				HeroAcceleration = 1.0 * (-Gravity);
+				if (HeroVelocity > 0) HeroAcceleration = -2.0 * Gravity;
+				m_hero.Status = 1;
+			}
+			else
+			{
+				HeroAcceleration = 1.0 * Gravity;
+				if (HeroVelocity < 0) HeroAcceleration = 2.0 * Gravity;
+				m_hero.Status = 2;
+			}
+		}
+		else
+		{
+			if (GameMode == 2)
+			{
+
+			}
+			if (GameMode == 3)
+			{
+				
+			}
+			if (GameMode == 4 && DoOperation)
+			{
+				MachineCountdown--;
+				if (MachineCountdown == 4) m_hero.pos.y = MachineRecord;
+				if (MachineCountdown == 0) DoOperation = FALSE;
+			}
+		}
 	}
 	double HeroDisplacement = 1.0 * HeroVelocity + 0.5 * HeroAcceleration;
 	HeroVelocity += (int)HeroAcceleration;
@@ -1156,7 +1230,10 @@ VOID HeroUpdate()
 	++m_hero.curFrameIndex;
 	m_hero.curFrameIndex = m_hero.curFrameIndex >= HERO_MAX_FRAME ? 0 : m_hero.curFrameIndex;
 	if (m_hero.invincible) m_hero.invincible--;
+	++MachineCount;
+	if (MachineCount == 66) MachineCount = 0;
 }
+
 VOID BackgroundUpdate()
 {
 	int k;
@@ -1227,7 +1304,30 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	case VK_UP:
 		if (!m_hero.alive) break;
 		//m_hero.pos.y -= 50;
-		IsOnFire = true;
+		if (GameMode == 1)
+		{
+			IsOnFire = true;
+		}
+		if (GameMode == 2)
+		{
+
+		}
+		if (GameMode == 3)
+		{
+
+		}
+		if (GameMode == 4)
+		{
+			if (NextOperationValid && !DoOperation)
+			{
+				DoOperation = TRUE;
+				MachineCountdown = 10;
+				int NextMachineCount = MachineCount + 1;
+				if (NextMachineCount >= 66) NextMachineCount -= 66;
+				MachineRecord = HeroPosition[NextMachineCount];
+				NextOperationValid = FALSE;
+			}
+		}
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	case VK_DOWN:
@@ -1253,6 +1353,8 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		m_others[2] = CreateOthers(WNDWIDTH / 4, WNDHEIGHT - 160, 115 * 0.62, 108 * 0.62, m_hOthersBmp[2]);
 		Gravity = 2;
 		ElapseCount = 0;
+		NextOperationValid = TRUE;
+		DoOperation = FALSE;
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	case 'P':
@@ -1275,7 +1377,6 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 }
-
 VOID KeyDown2(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	switch (wParam)
@@ -1301,7 +1402,6 @@ VOID KeyDown2(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	}
 	InvalidateRect(hWnd, NULL, FALSE);
 }
-
 VOID KeyDown3(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	switch (wParam)
@@ -1327,7 +1427,6 @@ VOID KeyDown3(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	}
 	InvalidateRect(hWnd, NULL, FALSE);
 }
-
 VOID KeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	//TODO
@@ -1335,7 +1434,22 @@ VOID KeyUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 	case VK_UP:
 		//m_hero.pos.y += 50;
-		IsOnFire = false;
+		if (GameMode == 1)
+		{
+			IsOnFire = false;
+		}
+		if (GameMode == 2)
+		{
+
+		}
+		if (GameMode == 3)
+		{
+
+		}
+		if (GameMode == 4)
+		{
+			NextOperationValid = TRUE;
+		}
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	case VK_DOWN:

@@ -44,6 +44,11 @@ const int Alphabet[36][5] = {{0x3F, 0x48, 0x48, 0x48, 0x3F}, //A
 
 int AlphaCoin[10][7][5] = {0};
 int CoinPosition[10][2];
+int HeroPosition[66] = {0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256,
+					  287, 316, 343, 368, 391, 412, 431, 448, 463, 476, 487, 496, 503, 508, 511, 512,
+					  512, 511, 508, 503, 496, 487, 476, 463, 448, 431, 412, 391, 368, 343, 316, 287,
+					  256, 225, 196, 169, 144, 121, 100, 81, 64, 49, 36, 25, 16, 9, 4, 1, 0};
+
 
 int GetRandomInt(int RangeL, int RangeR)
 {
@@ -189,7 +194,7 @@ VOID GameParameterInitialize(BOOL LuckyCoin, BOOL SoulRing)
 	LaserCurrentFrame = 0;
 	LaserRandom = 30;
 	MissileGenerate = WNDWIDTH;
-	MissileRandom = 300;
+	MissileRandom = 150;
 	CoinPerLife = 100;
 	m_button[0].active = TRUE;
 	m_button[1].active = FALSE;
