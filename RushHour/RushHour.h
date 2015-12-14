@@ -3,6 +3,8 @@
 #include <string.h>
 #include <tchar.h>
 #include <math.h>
+#include <Mmsystem.h>
+#include <mmreg.h>
 #include "resource.h"
 
 /*定义宏变量，WNDWIDTH、WNDHEIGHT为窗口的宽和高*/
@@ -161,6 +163,23 @@ HBITMAP m_hShieldBmp, m_hShieldInvBmp;
 HBITMAP m_hLifeBmp;
 HBITMAP m_hNumberBmp[10];
 HBITMAP m_hSmallNumberBmp[10];
+
+MCI_OPEN_PARMS mciCoinOP;
+MCI_PLAY_PARMS mciCoinPP;
+
+MCI_OPEN_PARMS mciLifeOP;
+MCI_PLAY_PARMS mciLifePP;
+
+
+
+
+
+
+
+
+
+
+
 
 /*定义方块颜色数组，与m_hBlockBmp[BLOCK_COLOR_NUM]个数对应，0表示蓝色方块，1表示绿色方块，2表示橙色方块，3表示粉色方块*/
 int	m_blockBmpNames[] = {IDB_BLUE_BLOCK, IDB_GREEN_BLOCK, IDB_ORANGE_BLOCK, IDB_PINK_BLOCK};

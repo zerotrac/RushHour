@@ -1,4 +1,6 @@
 #pragma once
+#pragma comment(lib, "winmm.lib")
+
 //#pragma comment(lib, "Gdi32.lib")
 //#pragma comment(lib, "user32.lib")
 
@@ -219,6 +221,7 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
 	//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 	GameStatusInitialize();
+	PlaySound((LPCTSTR)IDR_BGM, NULL, SND_RESOURCE | SND_LOOP | SND_ASYNC);
 }
 
 VOID Render(HWND hWnd)
@@ -1023,7 +1026,7 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			CoinUpdate();
 			MissileUpdate();
 			LaserUpdate();
-			BOOL judgecollision = FALSE;
+			BOOL judgecollision = FALSE;;
 			if (!(GameMode == 4 && DoOperation && MachineCountdown >= 5)) judgecollision = CheckCollision();
 			if (judgecollision)
 			{
@@ -1033,6 +1036,7 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					m_hero.alive = FALSE;
 					IsOnFire = FALSE;
 					AntiGravity = FALSE;
+					PlaySound((LPCTSTR)IDR_DEATH, NULL, SND_RESOURCE | SND_LOOP | SND_ASYNC);
 					//KillTimer(hWnd, TIMER_ID);
 					//KillTimer(hWnd, SCORE_ID);
 				}
@@ -1385,6 +1389,7 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		ElapseCount = 0;
 		NextOperationValid = TRUE;
 		DoOperation = FALSE;
+		PlaySound((LPCTSTR)IDR_BGM, NULL, SND_RESOURCE | SND_LOOP | SND_ASYNC);
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	case 'P':
