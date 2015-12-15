@@ -49,7 +49,6 @@ int HeroPosition[66] = {0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 
 					  512, 511, 508, 503, 496, 487, 476, 463, 448, 431, 412, 391, 368, 343, 316, 287,
 					  256, 225, 196, 169, 144, 121, 100, 81, 64, 49, 36, 25, 16, 9, 4, 1, 0};
 
-
 int GetRandomInt(int RangeL, int RangeR)
 {
 	int randint = rand() % (RangeR - RangeL + 1) + RangeL;
@@ -86,14 +85,6 @@ void Transform(int label, int num, BOOL LuckyCoin)
 		}
 	}
 }
-
-/*
-
-(x1, y1)|-------|
-		|		|
-		|-------|(x2, y2)
-
-*/
 
 BOOL Collision(Hero hero, int x1, int y1, int x2, int y2, int type)
 {
@@ -157,7 +148,6 @@ BOOL CheckCollision()
 				}
 			}
 	}
-
 	return CollisionwithMissile | CollisionwithLaser;
 }
 

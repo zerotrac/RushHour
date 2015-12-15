@@ -1,11 +1,7 @@
 #pragma once
 #pragma comment(lib, "winmm.lib")
 
-//#pragma comment(lib, "Gdi32.lib")
-//#pragma comment(lib, "user32.lib")
-
 #include "RushHour.h"
-#include "Random.h"
 #include "Jumping.h"
 
 BOOL GameStart = FALSE;
@@ -59,16 +55,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// The parameters to CreateWindow explained:
-	// szWindowClass: the name of the application
-	// szTitle: the text that appears in the title bar
-	// WS_OVERLAPPEDWINDOW: the type of window to create,~WS_THICKFRAME  fixed window size
-	// CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
-	// WNDWIDTH, WNDHEIGHT: initial size (width, length)
-	// NULL: the parent of this window
-	// NULL: this application does not have a menu bar
-	// hInstance: the first parameter from WinMain
-	// NULL: not used in this application
 	hWnd = CreateWindow(szWindowClass, szTitle,	WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
 						CW_USEDEFAULT, CW_USEDEFAULT, WNDWIDTH, WNDHEIGHT, NULL, NULL, hInstance, NULL);
 
@@ -78,13 +64,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 1;
 	}
 
-	// The parameters to ShowWindow explained:
-	// hWnd: the value returned from CreateWindow
-	// nCmdShow: the fourth parameter from WinMain
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 
-	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		TranslateMessage(&msg);
@@ -94,15 +76,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return (int)msg.wParam;
 }
 
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -154,18 +127,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-	//加载Building位图
-	m_hBuildingBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BUILDING));
-
-	//加载英雄位图
 	m_hHeroBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HERO));
 	m_hHeroMistBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROMIST));
 	m_hHeroInvBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_HEROINV));
+
 	m_hShieldBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_SHIELD));
 	m_hShieldInvBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_SHIELDINV));
+
 	m_hCoinBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COIN));
 	m_coin = CreateCoin(100, 100, COIN_SIZE, COIN_SIZE, m_hCoinBmp);
 	m_hLuckyBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_COINB));;
+
 	m_hLifeBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_LIFE));
 	m_hGameStatusBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_GAME_STATUS));
 	m_hScoreboardBmp = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_SCOREBOARD));
@@ -188,21 +160,19 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		m_hMissileBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_missileBmpNames[k]));
 	}
 
-	//加载背景位图
-	int k;
-	for (k = 0; k < BACKGROUND_COLOR_NUM; k++)
+	for (int k = 0; k < BACKGROUND_COLOR_NUM; k++)
 	{
 		m_hBackgroundBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_backgroundBmpNames[k]));
 	}
 
-	//加载按钮位图
 	m_hOthersBmp[0] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[0]));
 	m_others[0] = CreateOthers(WNDWIDTH - 425, 0, 425, 460, m_hOthersBmp[0]);
 	m_hOthersBmp[1] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[1]));
 	m_others[1] = CreateOthers(250, 100, 450 * 1.2, 250 * 1.2, m_hOthersBmp[1]);
 	m_hOthersBmp[2] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[2]));
 	m_others[2] = CreateOthers(WNDWIDTH / 4, WNDHEIGHT - 160, 115 * 0.62, 108 * 0.62, m_hOthersBmp[2]);
-	for (k = 0; k < BUTTON_NUM * 2; k++)
+
+	for (int k = 0; k < BUTTON_NUM * 2; k++)
 	{
 		m_hButtonBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_buttonBmpNames[k]));
 		int group = k / 2;
@@ -216,10 +186,8 @@ VOID Init(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		m_hOthersBmp[k] = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(m_othersBmpNames[k]));
 	}
-	//创建游戏状态
-	//启动计时器
+
 	SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
-	//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 	GameStatusInitialize();
 	PlaySound((LPCTSTR)IDR_BGM, NULL, SND_RESOURCE | SND_LOOP | SND_ASYNC);
 }
@@ -228,7 +196,7 @@ VOID Render(HWND hWnd)
 {
 	PAINTSTRUCT ps;
 	HDC hdc;
-	//开始绘制
+
 	hdc = BeginPaint(hWnd, &ps);
 
 	HDC	hdcBmp, hdcBuffer;
@@ -239,9 +207,7 @@ VOID Render(HWND hWnd)
 	hdcBuffer = CreateCompatibleDC(hdc);
 	SelectObject(hdcBuffer, cptBmp);
 
-	//绘制背景到缓存
-	int k;
-	for (k = 0; k < MAX_BACKGROUND_NUM; k++)
+	for (int k = 0; k < MAX_BACKGROUND_NUM; k++)
 	{
 		Background background = m_background[k];
 		SelectObject(hdcBmp, background.hBmp);
@@ -317,6 +283,7 @@ VOID Render(HWND hWnd)
 			}
 		}
 	}
+
 	if (m_missile.active)
 	{
 		if (m_missile.countdown)
@@ -344,10 +311,7 @@ VOID Render(HWND hWnd)
 		}
 	}
 
-	
-
-	//绘制按钮到缓存
-	for (k = 0; k < OTHERS_NUM; k++)
+	for (int k = 0; k < OTHERS_NUM; k++)
 	{
 		Others others = m_others[k];
 		SelectObject(hdcBmp, others.hBmp);
@@ -379,9 +343,10 @@ VOID Render(HWND hWnd)
 			);
 		}
 	}
+
 	if (!AppStore && !SelectMode)
 	{
-		for (k = 0; k < BUTTON_NUM * 2; k++)
+		for (int k = 0; k < BUTTON_NUM * 2; k++)
 		{
 			Button button = m_button[k];
 			if (button.active)
@@ -397,7 +362,6 @@ VOID Render(HWND hWnd)
 		}
 	}
 
-	//绘制Hero到缓存
 	if (m_hero.alive)
 	{
 		int HeroBitLabel;
@@ -675,21 +639,9 @@ VOID Render(HWND hWnd)
 		}
 	}
 
-	//绘制游戏状态
-	//暂停或继续位图
-	
-
-	//绘制分数
 	TCHAR szDist[100];
 	SetTextColor(hdcBuffer, RGB(0, 0, 0));
 	SetBkMode(hdcBuffer, TRANSPARENT);
-
-	//TextOut(hdcBuffer, 0, WNDHEIGHT / 2, szDist, wsprintf(szDist, _T("Status = %d"), m_hero.Status));
-	/*TextOut(hdcBuffer, 0, WNDHEIGHT / 2, szDist, wsprintf(szDist, _T("Dist = %d"), (int)(ScorePerFrame * 4 * 5)));
-	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 50, szDist, wsprintf(szDist, _T("MCount = %d"), HeroPosition[MachineCount]));
-	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 100, szDist, wsprintf(szDist, _T("MRecord = %d"), MachineRecord));
-	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 150, szDist, wsprintf(szDist, _T("HPosY = %d"), m_hero.pos.y));
-	TextOut(hdcBuffer, 0, WNDHEIGHT / 2 + 200, szDist, wsprintf(szDist, _T("MCountDown = %d"), MachineCountdown));*/
 
 	if (GameStart)
 	{
@@ -863,21 +815,17 @@ VOID Render(HWND hWnd)
 		if (!GameStart) TextOut(hdcBuffer, 1110, 430, szDist, wsprintf(szDist, _T("Press B to return back")));
 	}
 
-	//最后将所有的信息绘制到屏幕上
 	BitBlt(hdc, 0, 0, WNDWIDTH, WNDHEIGHT, hdcBuffer, 0, 0, SRCCOPY);
 
-	//回收资源所占的内存
 	DeleteObject(cptBmp);
 	DeleteDC(hdcBuffer);
 	DeleteDC(hdcBmp);
 
-	//结束绘制
 	EndPaint(hWnd, &ps);
 
 	if (!ScoreBoard && !m_hero.alive && m_hero.pos.y == WNDHEIGHT - HERO_TO_GROUND)
 	{
 		KillTimer(hWnd, TIMER_ID);
-		//KillTimer(hWnd, SCORE_ID);
 		SetTimer(hWnd, ENDING_ID, ENDING_ELAPSE, NULL);
 		Sleep(1500);
 		ScoreBoard = TRUE;
@@ -970,16 +918,6 @@ Others CreateOthers(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp)
 	others.size.cy = sizeY;
 	return others;
 }
-Building CreateBuilding(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp)
-{
-	Building building;
-	building.hBmp = hBmp;
-	building.pos.x = posX;
-	building.pos.y = posY;
-	building.size.cx = sizeX;
-	building.size.cy = sizeY;
-	return building;
-}
 GameStatus CreateGameStatus(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMAP hBmp)
 {
 	GameStatus gameStatus;
@@ -994,23 +932,6 @@ GameStatus CreateGameStatus(LONG posX, LONG posY, LONG sizeX, LONG sizeY, HBITMA
 	gameStatus.isPaused = false;
 	return gameStatus;
 }
-Terrian CreateTerrian(LONG posX, LONG posY, LONG sizeX, LONG sizeY, 
-					  HBITMAP hBlockBmp, HBITMAP hRoofBmp, int roofHeight, int blockHeight)
-{
-	Terrian terrian;
-	terrian.pos.x = posX;
-	terrian.pos.y = posY;
-	terrian.size.cx = sizeX;
-	terrian.size.cy = sizeY;
-	terrian.hBlockBmp = hBlockBmp;
-	terrian.hRoofBmp = hRoofBmp;
-	terrian.roofWidth = sizeX;
-	terrian.roofHeight = roofHeight;
-	terrian.blockWidth = sizeX;
-	terrian.blockHeight = blockHeight;
-	terrian.blockNum = (int)ceil((sizeY - roofHeight) * 1.0 / blockHeight); 
-	return terrian;
-}
 
 VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
@@ -1018,7 +939,6 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	{
 		HeroUpdate();
 		BackgroundUpdate();
-		TerrianUpdate();
 		if (GameStart)
 		{
 			GameStatusUpdate();
@@ -1037,8 +957,6 @@ VOID TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					IsOnFire = FALSE;
 					AntiGravity = FALSE;
 					PlaySound((LPCTSTR)IDR_DEATH, NULL, SND_RESOURCE | SND_LOOP | SND_ASYNC);
-					//KillTimer(hWnd, TIMER_ID);
-					//KillTimer(hWnd, SCORE_ID);
 				}
 				else
 				{
@@ -1173,9 +1091,6 @@ VOID OthersUpdate()
 }
 VOID HeroUpdate()
 {
-	//TODO
-	//更新位置
-	//更新动作
 	double HeroAcceleration = 0;
 	if (!m_hero.alive)
 	{
@@ -1275,22 +1190,8 @@ VOID BackgroundUpdate()
 	}
 	m_others[2].pos.x -= (int)(ScorePerFrame * 4 + 0.5);
 }
-VOID TerrianUpdate()
-{
-	//TODO
-	int k;
-	for (k = 0; k < MAX_TERRIAN_NUM; ++k)
-	{
-		m_terrian[k].pos.x -= 2;
-		if (m_terrian[k].pos.x + m_terrian[k].size.cx < 0)
-		{
-			m_terrian[k].pos.x += MAX_TERRIAN_NUM * m_terrian[k].size.cx;
-		}
-	}
-}
 VOID GameStatusUpdate()
 {
-	//TODO
 	m_gameStatus.totalDist += ScorePerFrame;
 	LaserGenerate -= (int)(ScorePerFrame * 4 + 0.5);
 	if (LaserGenerate < 0) LaserGenerate = 0;
@@ -1323,12 +1224,10 @@ BOOL MouseInButton(POINT ptMouse, Button button)
 
 VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-	//TODO
 	switch (wParam)
 	{
 	case VK_UP:
 		if (!m_hero.alive) break;
-		//m_hero.pos.y -= 50;
 		if (GameMode == 1)
 		{
 			IsOnFire = true;
@@ -1368,7 +1267,6 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		if (!m_hero.alive) break;
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
-	//case 0x52: //VK_R = 0x52
 	case 'R':
 		if (m_hero.alive) break;
 		GameStatusInitialize();
@@ -1381,7 +1279,6 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		HeroVelocity = 0;
 		ScorePerFrame = 4.0;
 		SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
-		//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 		KillTimer(hWnd, ENDING_ID);
 		m_others[0] = CreateOthers(WNDWIDTH, WNDHEIGHT, 425, 460, m_hOthersBmp[0]);
 		m_others[2] = CreateOthers(WNDWIDTH / 4, WNDHEIGHT - 160, 115 * 0.62, 108 * 0.62, m_hOthersBmp[2]);
@@ -1397,13 +1294,11 @@ VOID KeyDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		if (!m_gameStatus.isPaused)
 		{
 			KillTimer(hWnd, TIMER_ID);
-			//KillTimer(hWnd, SCORE_ID);
 			m_gameStatus.isPaused = TRUE;
 		}
 		else
 		{
 			SetTimer(hWnd, TIMER_ID, TIMER_ELAPSE, NULL);
-			//SetTimer(hWnd, SCORE_ID, SCORE_ELAPSE, NULL);
 			m_gameStatus.isPaused = FALSE;
 		}
 		InvalidateRect(hWnd, NULL, FALSE);
